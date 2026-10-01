@@ -1,0 +1,12 @@
+,DailyDialog,PersonaChat,mean_icc
+n_words,0.302,0.233,0.267
+n_chars,0.322,0.278,0.3
+log_words,0.253,0.236,0.245
+n_sentences,0.208,0.317,0.263
+avg_sent_len,0.216,0.199,0.208
+punct_density,0.15,0.306,0.228
+n_questions,0.168,0.104,0.136
+n_exclam,0.243,0.343,0.293
+has_ellipsis,0.125,0.123,0.124
+caps_ratio,0.109,,0.109
+starts_lower,0.58,0.036,0.308

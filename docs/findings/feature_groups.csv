@@ -1,0 +1,12 @@
+feature,group,mean_icc,kept
+starts_lower,1,0.308,True
+caps_ratio,1,0.109,False
+avg_sent_len,2,0.208,True
+punct_density,3,0.228,True
+n_chars,4,0.3,True
+n_words,4,0.267,False
+log_words,4,0.245,False
+n_sentences,5,0.263,True
+n_questions,6,0.136,True
+n_exclam,7,0.293,True
+has_ellipsis,8,0.124,True

@@ -1,0 +1,22 @@
+{
+  "selected": [
+    "starts_lower",
+    "n_chars",
+    "n_exclam",
+    "n_sentences",
+    "punct_density",
+    "avg_sent_len",
+    "n_questions",
+    "has_ellipsis"
+  ],
+  "dead": [
+    "n_emoji",
+    "has_emoji",
+    "emoji_per_word",
+    "n_emoticon",
+    "has_newline",
+    "has_list"
+  ],
+  "corr_threshold": 0.85,
+  "min_nonzero": 0.01
+}
