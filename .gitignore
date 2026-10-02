@@ -9,3 +9,4 @@ models/saved_models/*
 models/formality_model/*
 models/response_ranker/*
 !**/.gitkeep
+data/external/*
