@@ -13,3 +13,6 @@ models/response_ranker/*
 data/external/Enron/maildir/**/*
 # Large external datasets
 data/external/Enron/
+data/external/
+data/processed/enron_messages.csv
+data/processed/benchmark_v0.csv
