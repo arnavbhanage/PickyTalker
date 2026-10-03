@@ -38,7 +38,7 @@ def test_build_dedup_and_owner_filter_and_splits(tmp_path):
                                            date=f"Mon, {i+1} May 2001 10:00:00 -0700"))
         (d / "dup.").write_text(_mail("message number 0 from %s please review" % owner, frm=f"{owner}@x.com"))
     df = build_enron(tmp_path)
-    assert df["user_id"].nunique() == 2 and len(df) == 24      # duplicate removed
+    assert df["user_id"].nunique() == 2 and len(df) == 24      
     s = make_splits(df, min_msgs=10)
     assert set(s["time_split"]) == {"history", "eval"}
     assert s.groupby("user_id")["user_split"].nunique().max() == 1   # a user never straddles splits
