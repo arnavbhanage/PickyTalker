@@ -14,3 +14,7 @@ models/formality_model/*
 models/response_ranker/*
 !**/.gitkeep
 data/external/*
+
+
+.env
+data/cache/

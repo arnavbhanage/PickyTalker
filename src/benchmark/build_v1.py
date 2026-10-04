@@ -15,6 +15,32 @@ def _norm(s: str) -> str:
     return re.sub(r"\W+", "", str(s).lower())
 
 
+def _sample_noncentral(pool: np.ndarray, target_len: float, n_neg: int,
+                       lengths: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """Keep the target item from landing at the median length of a lineup.
+
+    Topic-similar negatives can otherwise cluster around the true reply's length,
+    which makes a cheap centrality attack surprisingly effective. If the chosen
+    negatives make the positive item the exact median, resample the pool until the
+    true reply sits off-center in the lineup length distribution.
+    """
+    pool = np.asarray(pool, dtype=int)
+    chosen = rng.choice(pool, n_neg, replace=False)
+    for _ in range(50):
+        cand_lengths = np.concatenate(([target_len], lengths[chosen]))
+        median = np.median(cand_lengths)
+        span = float(np.ptp(cand_lengths))
+        if abs(target_len - median) > 0.25 * (span + 1e-9):
+            return chosen
+        rem = pool[~np.isin(pool, chosen)]
+        if len(rem) == 0:
+            return chosen
+        replace_idx = int(np.argmin(np.abs(lengths[chosen] - target_len)))
+        alt_idx = int(np.argmax(np.abs(lengths[rem] - target_len)))
+        chosen[replace_idx] = rem[alt_idx]
+    return chosen
+
+
 def build_benchmark_v1(df: pd.DataFrame, n_neg: int = 9, eval_splits=("val", "test"),
                        max_items_per_user: int = 50, len_tol: float = 0.15,
                        cluster_size: int = 80, seed: int = 0) -> pd.DataFrame:
@@ -54,7 +80,7 @@ def build_benchmark_v1(df: pd.DataFrame, n_neg: int = 9, eval_splits=("val", "te
         cl = members[labels[i]]
         cl_ok = cl[ok[cl]]
         if len(cl_ok) >= n_neg:
-            cands["content_similar"] = rng.choice(cl_ok, n_neg, replace=False)
+            cands["content_similar"] = _sample_noncentral(cl_ok, lw[i], n_neg, lw, rng)
 
         c2 = lw[i] + rng.uniform(-len_tol, len_tol)
         cl_len = cl_ok[np.abs(lw[cl_ok] - c2) <= len_tol]
