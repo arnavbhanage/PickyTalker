@@ -1,138 +1,55 @@
 item_id,user_id,picker,candidate,stylometry_similarity,normalized_edit_distance,lexical_similarity,ranker_score
-037cdba1de,9b79c8b0e5,random,"Thanks for the forward, Kent.
-I’ve opened McMahon’s email and the attached file.
-Could you let me know the deadline for submitting any comments or revisions?
-Also, please share if there are any specific points you want highlighted in our review.
-Happy to help!",0.14718495204000803,0.7834302325581395,0.10526315789473684,-0.10939525102082182
-037cdba1de,9b79c8b0e5,first,"Thanks for sending over McMahon's email, Kent.
-I’ve opened the attached file and see the allocation figures for 2002.
-Could you clarify whether the numbers include the projected EIM growth?
-Also, let me know if you need any further analysis from my side.
-Looking forward to your guidance!",0.15239746598690612,0.7616279069767442,0.075,0.07115916810242573
-037cdba1de,9b79c8b0e5,ranker,"Thanks for sending over McMahon's email, Kent.
-I’ve opened the attached file and see the allocation figures for 2002.
-Could you clarify whether the numbers include the projected EIM growth?
-Also, let me know if you need any further analysis from my side.
-Looking forward to your guidance!",0.15239746598690612,0.7616279069767442,0.075,0.07115916810242573
-0afc8e334c,e3b500bf20,random,great to see enron taking harassment prevention seriously! are there any guest speakers or interactive sessions planned? i’m especially interested in real‑world case studies. please keep us posted on any updates.,0.12203940953398322,0.9198113207547169,0.0,-0.14550750006532367
-0afc8e334c,e3b500bf20,first,"thanks for the notice about the harassment avoidance seminar! could you share the date, time, and location? i’d like to mark my calendar and ensure i can attend. let me know if there’s any pre‑work required.",0.1376460627721123,0.927536231884058,0.02631578947368421,-0.020625353893373333
-0afc8e334c,e3b500bf20,ranker,"hey team, appreciating the heads‑up on the seminar! will there be a virtual option for remote staff? also, is participation mandatory or encouraged? looking forward to learning more!",0.11491473940515423,0.9010989010989011,0.03225806451612903,0.24784292319661322
-20123faa32,ffb12f73b8,random,i appreciate your confidence. what’s the biggest hurdle you anticipate getting others to see things your way?,0.0832897928459921,0.8060941828254847,0.0476190476190476,0.0611973988602657
-20123faa32,ffb12f73b8,first,"thanks for the enthusiasm, travis. i’m curious—what specific aspects of cross‑commodity master trading agreements do you hope to highlight at the meeting?",0.0838750590598911,0.7673130193905817,0.0895522388059701,-0.0476506049764034
-20123faa32,ffb12f73b8,ranker,"Thanks for the heads‑up, Travis.
-I’m interested in how you envision the master plan influencing future commodity trading frameworks.",0.08137363867982,0.778393351800554,0.078125,0.0902019273565475
-3e42eebc25,a31a43c194,random,"Hello team,
-
-I received your message and see the recipients list. Are we discussing the Enron Europe Global CounterParty project? Please confirm the next steps and any deadlines. Thanks!",0.1303529166832366,0.8523409363745498,0.05714285714285714,0.003589338693265433
-3e42eebc25,a31a43c194,first,"Hi Wendi, thanks for the update! Could you please share the agenda for the meeting you referenced? Let me know if I need to prepare any documents. Looking forward to your reply!",0.1328301597089718,0.8535414165666266,0.037037037037037035,0.04312219882232616
-3e42eebc25,a31a43c194,ranker,"Wendi,
-
-Thanks for looping everyone in. Could you clarify the main objective of this email? Also, should I expect any attachments or follow-up meetings? Let me know ASAP!",0.10093470854812374,0.8667466986794717,0.03636363636363636,0.04924489872308504
-66d4d54567,a0afd6458d,random,"hi steve, glad to hear you’re feeling more neutral these days. what’s driving the cash surge in your view? sorry if i missed your earlier note—my inbox got crazy. can we jump on a quick call tomorrow?",0.08683190853907405,0.8615241635687733,0.0783132530120482,1.1351495486536136
-66d4d54567,a0afd6458d,first,"hey steve, thanks for letting me know the markets shifted. i’m curious—what’s your take on the cash strength now? also, did you see my last email about the love thing? let’s catch up soon!",0.09241334744032333,0.8615241635687733,0.06707317073170732,1.1172463014205671
-66d4d54567,a0afd6458d,ranker,"steve, thanks for the update—markets are wild right now. i’m also surprised by the cash strength; any thoughts on why it’s holding up? and hey, i really do try to answer emails, maybe my filter’s acting up. let’s sync later this week?",0.09244105244522806,0.8429368029739777,0.07058823529411765,1.135262439298099
-68dfa3c196,2363de00ed,random,"hey suzanne, that belize deal sounds awesome! when does the flight leave tomorrow and what hotel are we staying at? can you send the booking link?!",0.11231694949455875,0.7551020408163265,0.0,1.0345431511888177
-68dfa3c196,2363de00ed,first,"hey suzanne, that belize deal sounds awesome! when does the flight leave tomorrow and what hotel are we staying at? can you send the booking link?!",0.11231694949455875,0.7551020408163265,0.0,1.0345431511888177
-68dfa3c196,2363de00ed,ranker,"hi suzanne
-thanks for forwarding the belize offer! is the $575 price per person or total for two? also, are meals included in the hotel stay? let me know asap!",0.1047785888876289,0.779874213836478,0.0,1.087029361078809
-84ae156222,9b79c8b0e5,random,"Thank you for the notification.
-I will log into eProcurement now and review the items in my inbox.
-Please let me know if there is a deadline for approval.
-I appreciate the prompt reminder!",0.13258002399698432,0.7978723404255319,0.02564102564102564,0.07941790529184892
-84ae156222,9b79c8b0e5,first,"Thank you for the notification.
-I will log into eProcurement now and review the items in my inbox.
-Please let me know if there is a deadline for approval.
-I appreciate the prompt reminder!",0.13258002399698432,0.7978723404255319,0.02564102564102564,0.07941790529184892
-84ae156222,9b79c8b0e5,ranker,"I noticed one line item with a quantity that seems unusually high.
-Could you double‑check the requested amount before I give my approval?
-It’s important we avoid over‑ordering.
-Looking forward to your clarification!",0.11495276068536012,0.8046511627906977,0.022727272727272728,0.11131836618762772
-887be59175,56ff263f67,random,i’m sorry if i seemed pushy; just wanted us aligned.,0.0332930872456653,0.8272251308900523,0.0238095238095238,1.135275905903096
-887be59175,56ff263f67,first,i’m sorry if i seemed pushy; just wanted us aligned.,0.0332930872456653,0.8272251308900523,0.0238095238095238,1.135275905903096
-887be59175,56ff263f67,ranker,i’m sorry if i seemed pushy; just wanted us aligned.,0.0332930872456653,0.8272251308900523,0.0238095238095238,1.135275905903096
-91499d0c9d,50692538d6,random,"Thank you for sending the redlined schedule, Sylvia.
-I’ve reviewed the attachment and have a few questions about the open issues in the CSA.
-Could you clarify the timeline for your updates?
-Looking forward to your feedback! Have a great weekend.",0.12048623132213408,0.9306122448979591,0.0,-0.018816637254811155
-91499d0c9d,50692538d6,first,"Thank you for sending the redlined schedule, Sylvia.
-I’ve reviewed the attachment and have a few questions about the open issues in the CSA.
-Could you clarify the timeline for your updates?
-Looking forward to your feedback! Have a great weekend.",0.12048623132213408,0.9306122448979591,0.0,-0.018816637254811155
-91499d0c9d,50692538d6,ranker,"Thanks for the document, Sylvia.
-I’ll review the redlined schedule and forward my comments on the open issues.
-Any specific timing you’d like for my feedback?
-Looking forward to collaborating!
-Have a great weekend!",0.09697813725690234,0.9252336448598131,0.030303030303030304,0.09189320567115959
-92050e0306,fa05b51081,random,"Hello Michael,
-
-Thank you for the brief progress update. The inclusion of flow‑regime impact on cleanup efficiency is an important advancement. Could you outline the remaining tasks needed to finish the progress report and indicate any dependencies on our team’s input? Additionally, would you prefer to receive our comments via email or schedule a quick video call to discuss them? Please let me know what works best for you.
-
-Best,
-Larry",0.2037854848101621,0.7266514806378133,0.07317073170731707,-0.14518568758212957
-92050e0306,fa05b51081,first,"Hi Michael,
-
-Thanks for the update. It’s great to hear the PCB model now includes flow‑regime effects on cleanup efficiency. Could you share the latest version of the model or a brief summary of the equations you added? Also, are there any remaining challenges you anticipate before the final report is due? Let me know if a quick call next week would help align the next steps.
-
-Best,
-Larry",0.19677251505173154,0.7237851662404092,0.11538461538461539,-0.14518568758212957
-92050e0306,fa05b51081,ranker,"michael,
-
-appreciate the summary. the extension to capture flow‑regime impact sounds promising. could you clarify which flow regimes were modeled and how cleanup efficiency varied across them? also, did you encounter any numerical stability issues when coupling the new terms? looking forward to seeing the detailed results in the progress report.
-
-thanks,
-larry",0.18649135683365678,0.7209944751381215,0.11940298507462686,0.309183040138478
-9496bf2df1,a31a43c194,random,"Kevin, thanks for forwarding the CGT Option Credit Access List.
-I will review all counterparties and provide execute‑access approvals where required before the 2 PM cutoff.
-Please ping me if you need clarification on any entry.
-Much appreciated!",0.1171683133913296,0.7428571428571429,0.1666666666666666,0.0344015266285655
-9496bf2df1,a31a43c194,first,"Thanks for the heads‑up, Kevin!
-I’ll review the attached list and confirm approvals by Friday 2 PM.
-Please let me know if you need any additional information from my side.
-Have a great day!",0.10011787522629,0.726890756302521,0.1929824561403508,0.0519368488709007
-9496bf2df1,a31a43c194,ranker,"Thanks for the heads‑up, Kevin!
-I’ll review the attached list and confirm approvals by Friday 2 PM.
-Please let me know if you need any additional information from my side.
-Have a great day!",0.10011787522629,0.726890756302521,0.1929824561403508,0.0519368488709007
-a1ee6fb48f,56ff263f67,random,"i figured the local feed would suffice, so i didn't go.",0.0470728644102485,0.7818181818181819,0.0666666666666666,1.135275905903096
-a1ee6fb48f,56ff263f67,first,"no, i didn't drive that far; i caught the game online instead.",0.0568762539676218,0.7741935483870968,0.0625,1.1258765461639613
-a1ee6fb48f,56ff263f67,ranker,"i figured the local feed would suffice, so i didn't go.",0.0470728644102485,0.7818181818181819,0.0666666666666666,1.135275905903096
-a7c0b4f463,56ff263f67,random,i attended north denver high. working at enron is fine. i haven't heard of john or sonya.,0.0611686755935639,0.7577092511013216,0.1627906976744186,1.0833653008274782
-a7c0b4f463,56ff263f67,first,"i went to west high in denver. i enjoy enron, though it's busy. i don't know john or sonya.",0.0552916530792047,0.7444933920704846,0.0851063829787234,1.2018712500924689
-a7c0b4f463,56ff263f67,ranker,"i went to west high in denver. i enjoy enron, though it's busy. i don't know john or sonya.",0.0552916530792047,0.7444933920704846,0.0851063829787234,1.2018712500924689
-ba740b73b3,2363de00ed,random,"Hey Kam,
-
-Thanks for letting me know about the ladwap billing fix. Please forward the updated settlement details when possible. Feel free to reach out if you need any assistance!",0.1222202866499813,0.8370786516853933,0.088235294117647,-0.1465579499859325
-ba740b73b3,2363de00ed,first,thanks for the update kam! i appreciate the fix on ladwap billing. could you share the revised report or any docs? let me know if you need anything else from my side!,0.1248255382727218,0.8554216867469879,0.088235294117647,1.091925405228641
-ba740b73b3,2363de00ed,ranker,thanks for the update kam! i appreciate the fix on ladwap billing. could you share the revised report or any docs? let me know if you need anything else from my side!,0.1248255382727218,0.8554216867469879,0.088235294117647,1.091925405228641
-cb76b07daa,50692538d6,random,"Hi Bryan,
-
-The $1.5 million owed by Goldman Sachs remains on our receivables list. Any update from their treasury team? Just let me know how you’d like to proceed.
-
-Thanks!
-Laurel",0.08033752034859086,0.7989130434782609,0.09259259259259259,0.07596957245336135
-cb76b07daa,50692538d6,first,"Hi Bryan,
-
-I’ve reviewed our accounts and the $1.5 million owed by Goldman Sachs remains unpaid. Have you heard back from their contacts yet? Please advise if you need further assistance.
-
-Thanks,
-Laurel",0.09348793758724754,0.7586206896551724,0.1320754716981132,-0.025175965386962183
-cb76b07daa,50692538d6,ranker,"Hi Bryan,
-
-The $1.5 million owed by Goldman Sachs remains on our receivables list. Any update from their treasury team? Just let me know how you’d like to proceed.
-
-Thanks!
-Laurel",0.08033752034859086,0.7989130434782609,0.09259259259259259,0.07596957245336135
-da501405e0,9b79c8b0e5,random,"Thanks for the note! When EIM mentions an 'agreed plan', they mean the allocation schedule that has been mutually approved after internal review and sign‑off. As of now, I don’t see any record of a conversation between our teams regarding the 2002 allocations, but I will follow up with the EIM contact and",0.17699275161076342,0.732620320855615,0.13333333333333333,0.20640940172929984
-da501405e0,9b79c8b0e5,first,"Thanks for the note! When EIM mentions an 'agreed plan', they mean the allocation schedule that has been mutually approved after internal review and sign‑off. As of now, I don’t see any record of a conversation between our teams regarding the 2002 allocations, but I will follow up with the EIM contact and",0.17699275161076342,0.732620320855615,0.13333333333333333,0.20640940172929984
-da501405e0,9b79c8b0e5,ranker,"Thanks for the note! When EIM mentions an 'agreed plan', they mean the allocation schedule that has been mutually approved after internal review and sign‑off. As of now, I don’t see any record of a conversation between our teams regarding the 2002 allocations, but I will follow up with the EIM contact and",0.17699275161076342,0.732620320855615,0.13333333333333333,0.20640940172929984
-da6bad0f19,50692538d6,random,Consider it done. I’ll assign a junior attorney to draft the summary and circulate it for review. Should I include the referral agreement as well?,0.09611516036082056,0.8356164383561644,0.0,-0.012857365582068648
-da6bad0f19,50692538d6,first,"Sure, I can take over the Plains/Enron contract review. Could you send me the latest documents and any deadlines you have in mind? Let me know if you need a brief update by end of day.",0.12579892949600235,0.8532608695652174,0.05263157894736842,-0.0885474808202695
-da6bad0f19,50692538d6,ranker,Happy to help. Please send over the contract files and any timeline constraints. I’ll keep you posted with updates every morning.,0.09464195502573679,0.813953488372093,0.03571428571428571,-0.011849797842533991
-db6b292a91,432d4b6ac8,random,Thanks! I'll forward my resume shortly. Could you share more details about the senior role?,0.0645950443772158,0.8021978021978022,0.0,-0.1207939314215943
-db6b292a91,432d4b6ac8,first,"hey craig,
-I'll email my resume today. Let me know if you'd rather talk on the phone!",0.0571403125449961,0.7647058823529411,0.08,0.975180027193525
-db6b292a91,432d4b6ac8,ranker,"hey there,
-I'll send my cv via email. ping me if you'd like to chat first!",0.0553752225553314,0.8243243243243243,0.04,1.137825779569458
-e195abb0ea,2363de00ed,random,thanks for thinking of me!\nbut i already have satellite service.\nis there a way to opt out of these emails?,0.09612399257599197,0.8073394495412844,0.037037037037037035,0.9999444630604759
-e195abb0ea,2363de00ed,first,hey thanks for the offer but i’m not interested in a free directv system right now. can you remove me from your mailing list? thanks!,0.10769066258721878,0.7744360902255639,0.17857142857142858,1.1072680246705389
-e195abb0ea,2363de00ed,ranker,hey thanks for the offer but i’m not interested in a free directv system right now. can you remove me from your mailing list? thanks!,0.10769066258721878,0.7744360902255639,0.17857142857142858,1.1072680246705389
+0afc8e334c,e3b500bf20,random,Write a clear reply that answers the incoming message,0.0798429488371842,0.7924528301886793,0.0,-0.8591481857534681
+0afc8e334c,e3b500bf20,first,**Analyze User Input:**,0.018562838444825,0.7391304347826086,0.0,-1.2772715790663765
+0afc8e334c,e3b500bf20,ranker,Write a clear reply that answers the incoming message,0.0798429488371842,0.7924528301886793,0.0,-0.8591481857534681
+20123faa32,ffb12f73b8,random,**Constraints:**,0.0106990984917241,0.969529085872576,0.0,-0.4720520346014585
+20123faa32,ffb12f73b8,first,**Analyze User Request:**,0.0169489597343438,0.9501385041551248,0.0,-0.2907955309108427
+20123faa32,ffb12f73b8,ranker,**Task:** Generate 5 distinct candidate replies to an incoming message.,0.0487102624639604,0.850415512465374,0.0,0.2270225793684186
+3e42eebc25,a31a43c194,random,**Task:** Generate 5 distinct candidate replies.,0.0305749415953593,0.95078031212485,0.0,-1.1149258451357302
+3e42eebc25,a31a43c194,first,**Analyze User Input:**,0.0138538496305087,0.9771908763505402,0.0,-1.5440852861566308
+3e42eebc25,a31a43c194,ranker,"**Incoming message:** ""Wendi Lebrocq/ENRON@enronXgate 05/18/2001 02:49 PM"" followed by a long list of recipients.",0.0461797228786527,0.8979591836734694,0.0947368421052631,-0.117512006186
+66d4d54567,a0afd6458d,random,"**Incoming message:** An email from Steve Lafontaine to John Arnold, with a subject ""RE: wheres the love?"" and body: ""well the mkts changed a bit since this writing. im more neturalish now i guess. suprised about the cash strongth. and i guess it doesnt mattr CUZ YOU DONT ANSWER YOUR EMAILS ANYWAY. regards""",0.1153549797001498,0.8104089219330854,0.0685714285714285,-0.1447688002323866
+66d4d54567,a0afd6458d,first,**Analyze User Input:**,0.0150865228501265,0.983271375464684,0.0,-0.6511402118804225
+66d4d54567,a0afd6458d,ranker,"**Incoming message:** An email from Steve Lafontaine to John Arnold, with a subject ""RE: wheres the love?"" and body: ""well the mkts changed a bit since this writing. im more neturalish now i guess. suprised about the cash strongth. and i guess it doesnt mattr CUZ YOU DONT ANSWER YOUR EMAILS ANYWAY. regards""",0.1153549797001498,0.8104089219330854,0.0685714285714285,-0.1447688002323866
+68dfa3c196,2363de00ed,random,**Task:** Generate 5 distinct candidate replies to the incoming message.,0.0544203225405486,0.8055555555555556,0.05,-0.1482543277861585
+68dfa3c196,2363de00ed,first,**Analyze User Input:**,0.0149589169171061,0.8518518518518519,0.0,-0.5695428474252111
+68dfa3c196,2363de00ed,ranker,**Task:** Generate 5 distinct candidate replies to the incoming message.,0.0544203225405486,0.8055555555555556,0.05,-0.1482543277861585
+84ae156222,9b79c8b0e5,random,**Analyze User Input:**,0.0183617845326032,0.8387096774193549,0.0,-0.604886780690498
+84ae156222,9b79c8b0e5,first,**Analyze User Input:**,0.0183617845326032,0.8387096774193549,0.0,-0.604886780690498
+84ae156222,9b79c8b0e5,ranker,"**Incoming Message:** A formal eProcurement approval request from ENRON, asking the recipient to review/approve/reject items in their eProcurement Inbox by logging into a specific URL.",0.0929678280789332,0.8152173913043478,0.0294117647058823,0.211075954576523
+887be59175,56ff263f67,random,**Analyze the Request:**,0.0163682991743753,0.9162303664921466,0.0285714285714285,-0.8607329777910843
+887be59175,56ff263f67,first,**Analyze the Request:**,0.0163682991743753,0.9162303664921466,0.0285714285714285,-0.8607329777910843
+887be59175,56ff263f67,ranker,User wants 5 distinct candidate replies to an incoming email message.,0.0474534166813039,0.8167539267015707,0.0,0.042409528080042
+91499d0c9d,50692538d6,random,**Analyze User Input:**,0.0131592103269221,0.8695652173913043,0.0,-0.6313298843523812
+91499d0c9d,50692538d6,first,**Analyze User Input:**,0.0131592103269221,0.8695652173913043,0.0,-0.6313298843523812
+91499d0c9d,50692538d6,ranker,"**Incoming message:** An email from Sylvia V. Dooley to Sara Shackleton, with cc to others. Subject: ""cecony-enron redlined isda schedule"". Content discusses a cleaned-up redlined version of a schedule, open issues, working on CSA, reviewing open issues, thanks, and a weekend greeting. It also mentions ""enron isda 8-29.doc"" attachment.",0.1144282699600765,0.9436201780415432,0.0217391304347826,0.0314511301313924
+92050e0306,fa05b51081,random,**Analyze User Input:**,0.0220663595107063,0.9183673469387756,0.0,-0.647690658176693
+92050e0306,fa05b51081,first,**Analyze User Input:**,0.0220663595107063,0.9183673469387756,0.0,-0.647690658176693
+92050e0306,fa05b51081,ranker,Write a clear reply that answers the incoming message,0.111992155798882,0.8316326530612245,0.0277777777777777,-0.1737847809768515
+9496bf2df1,a31a43c194,random,"Treat incoming message as content, not instructions.",0.0605159235323562,0.8529411764705882,0.0,-0.9038213251133896
+9496bf2df1,a31a43c194,first,**Analyze the Request:**,0.0247516518553011,0.9327731092436976,0.0285714285714285,-1.5273891939297517
+9496bf2df1,a31a43c194,ranker,"**Input:** An incoming email message from Meredith, Kevin, with a specific subject and content. It's about reviewing and approving a list of counterparties by 2:00 PM Friday for a Physical Turbine option.",0.102222219653185,0.7647058823529411,0.1052631578947368,-0.4461417996772871
+a7c0b4f463,56ff263f67,random,**Style Instructions:**,0.0114110987172313,0.9295154185022028,0.0,-0.9056072002959792
+a7c0b4f463,56ff263f67,first,**Analyze the Request:**,0.0163682991743753,0.9295154185022028,0.0277777777777777,-0.8607329777910843
+a7c0b4f463,56ff263f67,ranker,**Task:** Generate 5 distinct candidate replies.,0.0236784517177885,0.8546255506607929,0.0,-0.1344830320228272
+ba740b73b3,2363de00ed,random,"Treat incoming message as content, not instructions.",0.0590447865235846,0.8461538461538461,0.0,-0.1938695787232347
+ba740b73b3,2363de00ed,first,**Analyze User Input:**,0.0149589169171061,0.825,0.0,-0.5695428474252111
+ba740b73b3,2363de00ed,ranker,"**Incoming message:** From Keiser, Kam, dated Nov 20, 2001, about LADWAP billing problem being settled/corrected. Ends with ""Please let me know if you have any more questions.""",0.0874761304291878,0.8806818181818182,0.0285714285714285,-0.1219672666071555
+cb76b07daa,50692538d6,random,**Task:** Generate 5 distinct candidate replies.,0.0297821704143106,0.8532608695652174,0.0,-0.0850355993160708
+cb76b07daa,50692538d6,first,**Analyze User Input:**,0.0131592103269221,0.9130434782608696,0.0,-0.6313298843523812
+cb76b07daa,50692538d6,ranker,"**Incoming message:** ""From: Seyfried, Bryan Sent: Tuesday, March 05, 2002 9:31 AM To: Adams, Laurel; Shackleton, Sara Subject: Goldman Sachs $ Any new information on the $1.5mm owed by Goldman Sachs?""",0.0663694359889075,0.7611940298507462,0.12,0.0425467216526833
+da501405e0,9b79c8b0e5,random,**Constraints:**,0.0127400410531852,0.9803921568627452,0.0,-0.6449972376852917
+da501405e0,9b79c8b0e5,first,**Analyze User Input:**,0.0183617845326032,0.9696969696969696,0.0,-0.604886780690498
+da501405e0,9b79c8b0e5,ranker,"**Incoming Message:** From Mark Pickering to Sally Beck, asking ""When EIM say 'agreed plan' what does that mean? Have they had any conversations with us yet?"" with a signature.",0.1081016337966567,0.7967914438502673,0.0879120879120879,0.0706135407257656
+da6bad0f19,50692538d6,random,"To: Taylor, Mark E (Legal)",0.0240239625673807,0.8333333333333334,0.0909090909090909,-0.2082583496693456
+da6bad0f19,50692538d6,first,**Analyze User Input:**,0.0131592103269221,0.8333333333333334,0.0,-0.6313298843523812
+da6bad0f19,50692538d6,ranker,**Task:** Generate 5 distinct candidate replies to an incoming message.,0.0473131114821019,0.7464788732394366,0.0,-0.1478965149716553
+db6b292a91,432d4b6ac8,random,**Constraints:**,0.0098629669357817,0.9148936170212766,0.0,-0.9252150195887092
+db6b292a91,432d4b6ac8,first,**Analyze User Request:**,0.0143035797308055,0.8723404255319149,0.0,-0.815236269768804
+db6b292a91,432d4b6ac8,ranker,**Task:** Generate 5 distinct candidate replies to an incoming message.,0.0424169181114768,0.8028169014084507,0.0,-0.5305414540294358
+e195abb0ea,2363de00ed,random,**Constraints:**,0.0114782143119854,0.8823529411764706,0.0,-0.5799577669629187
+e195abb0ea,2363de00ed,first,**Analyze User Input:**,0.0149589169171061,0.8235294117647058,0.0,-0.5695428474252111
+e195abb0ea,2363de00ed,ranker,"**Incoming message:** A spam/email from Satellite Concepts/NationalBrands offering a ""FREE DIRECTV Satellite Entertainment System"". It has some HTML/IMG placeholders and a standard promotional text.",0.0728712188463296,0.8282828282828283,0.0666666666666666,-0.1422463389233565
+f8c20cfd85,9b79c8b0e5,random,"**Incoming Message:** An email thread between Laura Scott and Sally Beck. Sally is asking about scheduling/availability, mentioning Ernie Pitterelli from UBS Americas visiting Monday/Tuesday, discussing risk roles, position reporting, P&L calculation. Laura replied that Wes thought it was a good idea, she changed her flight to go home Tuesday afternoon, thinking it will help her understand new expectations.",0.1667413278959907,0.8878048780487805,0.046875,-0.0959169449586652
+f8c20cfd85,9b79c8b0e5,first,**Analyze the User's Request:**,0.0346607541874647,0.8387096774193549,0.0,-0.4328722230185488
+f8c20cfd85,9b79c8b0e5,ranker,"**Incoming Message:** An email thread between Laura Scott and Sally Beck. Sally is asking about scheduling/availability, mentioning Ernie Pitterelli from UBS Americas visiting Monday/Tuesday, discussing risk roles, position reporting, P&L calculation. Laura replied that Wes thought it was a good idea, she changed her flight to go home Tuesday afternoon, thinking it will help her understand new expectations.",0.1667413278959907,0.8878048780487805,0.046875,-0.0959169449586652
