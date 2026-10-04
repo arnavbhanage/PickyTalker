@@ -1,5 +1,6 @@
 
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -13,6 +14,7 @@ from src.benchmark.evaluate import DEFAULT_FEATURES, StyleSpace, evaluate, summa
 from src.data.splits import make_splits
 from src.features.extractor import extract_frame
 
+ROOT = Path(__file__).resolve().parents[1]
 VOCAB = [f"w{i}" for i in range(80)]
 SEEDS = (0, 1, 2)
 
@@ -81,6 +83,19 @@ def test_personalization_wins_on_hardest_tier(runs):
     user = np.mean([r["user"] for r in runs])
     pop = np.mean([r["pop"] for r in runs])
     assert user > 0.30 and user > pop + 0.15 and pop < 0.16
+
+
+def test_v1_lineup_length_center_stays_below_audit_gate():
+    path = ROOT / "data" / "processed" / "enron_messages.csv"
+    if not path.exists():
+        pytest.skip(f"Enron data not present at {path}")
+    df = pd.read_csv(path)
+    space = StyleSpace(df, DEFAULT_FEATURES)
+    bench = build_benchmark_v1(df, seed=0)
+    attacks = lineup_attacks(df, bench, space)
+    by_user = attacks[(attacks["scorer"] == "lineup_length_center") & (attacks["tier"] == "content_similar")].groupby("user_id")["hit"].mean()
+    assert by_user.mean() < 0.14
+    assert (by_user > 0.14).sum() == 0
 
 
 def test_paired_gain_is_positive_and_well_formed(runs):
