@@ -25,10 +25,9 @@ from src.benchmark.evaluate import DEFAULT_FEATURES, StyleSpace
 from src.data.splits import make_splits
 from src.features.extractor import extract_message, extract_frame
 from src.generation.eval_items import select_eval_items
-from src.generation.generate import CONDITIONS, generate_candidates
-from src.generation.metrics import evaluate_candidates
+from src.generation.generate import CONDITIONS
 from src.generation.nim_client import NimClient
-from src.ranking.features import candidate_features
+from src.generation.run_eval import GenerationEvaluator
 from src.ranking.lgbm_ranker import train_ranker
 from src.ranking.train_data import build_training_lineups
 
@@ -40,12 +39,12 @@ N_CANDIDATES = 5
 TEMPERATURE = 0.6
 PILOT_SIZE = 20
 FULL_SIZE = 100
-RUN_FULL = True
+RUN_FULL = False
 SEED = 0
 
 if not os.getenv("NIM_MODEL"):
     raise RuntimeError("NIM_MODEL must be configured in the local environment or .env.")
-client = NimClient(requests_per_minute=30)
+client = NimClient(requests_per_minute=30, timeout_s=120)
 print("Configured model:", client.model)
 
 # %%
@@ -64,105 +63,14 @@ ranker = train_ranker(space, train_lineups, m=10, k=10.0, seed=SEED, n_estimator
 print("Train users:", train_df["user_id"].nunique())
 print("Training lineups:", len(train_lineups))
 
-# %%
-def score_generated_candidates(user_id, item_id, candidates):
-    generated_rows = []
-    candidate_ids = []
-    for index, text in enumerate(candidates):
-        candidate_id = f"generated-{item_id}-{index}"
-        candidate_ids.append(candidate_id)
-        generated_rows.append({
-            "message_id": candidate_id,
-            "message": text,
-            "user_id": user_id,
-            "time_split": "eval",
-            **extract_message(text),
-        })
-    if not generated_rows:
-        return []
-
-    extended_df = pd.concat([df, pd.DataFrame(generated_rows)], ignore_index=True, sort=False)
-    extended_space = StyleSpace(extended_df, DEFAULT_FEATURES)
-    features, feature_names = candidate_features(
-        extended_space, user_id, candidate_ids, m=10, k=10.0
+def run_generation(items, output_prefix):
+    runner = GenerationEvaluator(df, ranker, client, max_tokens=2500)
+    return runner.run(
+        items,
+        output_prefix=output_prefix,
+        checkpoint_every=10,
+        resume=True,
     )
-    trained_names = ranker.feature_names_
-    name_to_index = {name: index for index, name in enumerate(feature_names)}
-    missing = [name for name in trained_names if name not in name_to_index]
-    if missing:
-        raise ValueError(f"Generated candidate features are missing trained columns: {missing}")
-    ordered = features[:, [name_to_index[name] for name in trained_names]]
-    return ranker.predict(ordered).tolist()
-
-
-def run_generation(items):
-    call_rows = []
-    candidate_rows = []
-    for item in items.itertuples(index=False):
-        for condition in CONDITIONS:
-            started = time.perf_counter()
-            try:
-                candidates, response = generate_candidates(
-                    client,
-                    incoming_message=item.incoming_message,
-                    history_texts=item.history_texts,
-                    condition=condition,
-                    n=N_CANDIDATES,
-                    temperature=TEMPERATURE,
-                    return_response=True,
-                )
-            except Exception as exc:
-                elapsed = time.perf_counter() - started
-                call_rows.append({
-                    "item_id": item.item_id,
-                    "user_id": item.user_id,
-                    "condition": condition,
-                    "cached": False,
-                    "latency_s": elapsed,
-                    "prompt_tokens": None,
-                    "completion_tokens": None,
-                    "failed": True,
-                    "failure_type": type(exc).__name__,
-                    "failure_status_code": getattr(exc, "status_code", None),
-                    "parse_failure": False,
-                    "returned_candidates": 0,
-                })
-                continue
-
-            call_rows.append({
-                "item_id": item.item_id,
-                "user_id": item.user_id,
-                "condition": condition,
-                "cached": response.cached,
-                "latency_s": response.latency_s,
-                "prompt_tokens": response.prompt_tokens,
-                "completion_tokens": response.completion_tokens,
-                "failed": False,
-                "failure_type": None,
-                "failure_status_code": None,
-                "parse_failure": len(candidates) < N_CANDIDATES,
-                "returned_candidates": len(candidates),
-            })
-            if not candidates:
-                continue
-
-            ranker_scores = score_generated_candidates(item.user_id, item.item_id, candidates)
-            evaluated = evaluate_candidates(
-                candidates,
-                item.history_texts,
-                item.real_reply,
-                ranker_scores=ranker_scores,
-            )
-            evaluated["item_id"] = item.item_id
-            evaluated["user_id"] = item.user_id
-            evaluated["condition"] = condition
-            evaluated["incoming_message"] = item.incoming_message
-            evaluated["real_reply"] = item.real_reply
-            candidate_rows.extend(evaluated.to_dict("records"))
-
-    calls = pd.DataFrame(call_rows)
-    candidates = pd.DataFrame(candidate_rows)
-    return calls, candidates
 
 
 def call_stats(calls):
@@ -306,7 +214,7 @@ def example_table(items, candidates):
 # and partial/invalid candidate output separately instead of hiding either case.
 
 # %%
-pilot_calls, pilot_candidates = run_generation(pilot_items)
+pilot_calls, pilot_candidates = run_generation(pilot_items, "06_pilot")
 pilot_stats = call_stats(pilot_calls)
 pilot_metrics = metric_summary(pilot_candidates)
 pilot_selection = selection_test(pilot_candidates)
@@ -361,11 +269,11 @@ if not pilot_selection_summary.empty:
 # %% [markdown]
 # ## Full run: 100 held-out items
 #
-# Keep `RUN_FULL` false until the pilot results and blind review have been approved.
+# Keep the full 100-item run gated until a fresh pilot has been approved.
 
 # %%
 if RUN_FULL:
-    full_calls, full_candidates = run_generation(full_items)
+    full_calls, full_candidates = run_generation(full_items, "06_full")
     full_stats = call_stats(full_calls)
     full_metrics = metric_summary(full_candidates)
     independent_metrics = [

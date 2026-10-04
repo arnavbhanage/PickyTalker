@@ -11,9 +11,9 @@ class _TransientError(Exception):
         self.status_code = status_code
 
 
-def _completion(text="generated reply", prompt_tokens=11, completion_tokens=4):
+def _completion(text="generated reply", prompt_tokens=11, completion_tokens=4, finish_reason="stop"):
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=text))],
+        choices=[SimpleNamespace(message=SimpleNamespace(content=text), finish_reason=finish_reason)],
         usage=SimpleNamespace(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens),
     )
 
@@ -36,8 +36,9 @@ def _client(tmp_path, monkeypatch, responses, **kwargs):
     monkeypatch.setenv("NIM_MODEL", "test-model")
     completions = _Completions(responses)
     client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
+    cache_path = kwargs.pop("cache_path", tmp_path / "cache.jsonl")
     nim = NimClient(
-        cache_path=tmp_path / "cache.jsonl",
+        cache_path=cache_path,
         openai_client=client,
         backoff_seconds=0,
         **kwargs,
@@ -56,6 +57,7 @@ def test_cache_hit_avoids_a_second_api_call(tmp_path, monkeypatch):
     assert first.cached is False
     assert second.cached is True
     assert second.text == "generated reply"
+    assert second.finish_reason == "stop"
 
 
 def test_retries_429_then_succeeds(tmp_path, monkeypatch):
@@ -113,7 +115,53 @@ def test_usage_is_recorded_in_response_and_cache(tmp_path, monkeypatch):
     assert response.latency_s >= 0
     assert record["response"]["prompt_tokens"] == 13
     assert record["response"]["completion_tokens"] == 5
+    assert record["response"]["finish_reason"] == "stop"
     assert record["request"]["messages"][0]["content"] == "hello"
+
+
+def test_complete_lower_budget_json_response_is_reused_but_truncated_response_is_not(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("NVIDIA_API_KEY", "test-key-never-log-or-cache")
+    monkeypatch.setenv("NIM_MODEL", "test-model")
+    messages = [{"role": "user", "content": "Generate 2 distinct candidate replies."}]
+    cache_path = tmp_path / "cache.jsonl"
+    old_client, old_calls = _client(
+        tmp_path,
+        monkeypatch,
+        [_completion(text='["one", "two"]')],
+        cache_path=cache_path,
+    )
+    old_client.chat(messages, temperature=0.2, max_tokens=1500)
+
+    completions = _Completions([_completion(text='["one", "two", "three"]')])
+    client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
+    upgraded = NimClient(
+        cache_path=cache_path,
+        openai_client=client,
+        backoff_seconds=0,
+    )
+    cached = upgraded.chat(messages, temperature=0.2, max_tokens=2500)
+    assert cached.cached is True
+    assert completions.calls == 0
+
+    truncated_path = tmp_path / "truncated.jsonl"
+    truncated_client, _ = _client(
+        tmp_path,
+        monkeypatch,
+        [_completion(text='["one", "unfinished')],
+        cache_path=truncated_path,
+    )
+    truncated_client.chat(messages, temperature=0.2, max_tokens=1500)
+    fresh_completions = _Completions([_completion(text='["one", "two"]')])
+    fresh = NimClient(
+        cache_path=truncated_path,
+        openai_client=SimpleNamespace(chat=SimpleNamespace(completions=fresh_completions)),
+        backoff_seconds=0,
+    )
+    result = fresh.chat(messages, temperature=0.2, max_tokens=2500)
+    assert result.cached is False
+    assert fresh_completions.calls == 1
 
 
 def test_api_key_never_appears_in_logs_or_cache(tmp_path, monkeypatch, caplog):

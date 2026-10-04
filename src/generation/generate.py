@@ -52,13 +52,61 @@ def _strip_fence(text: str) -> str:
     return stripped
 
 
+def _contains_reasoning(text: str) -> bool:
+    lowered = text.casefold()
+    markers = (
+        "<think>",
+        "</think>",
+        "<analysis>",
+        "</analysis>",
+        "<reasoning>",
+        "</reasoning>",
+        "analysis:",
+        "reasoning:",
+        "let me think",
+        "let's think",
+        "we need to reason",
+    )
+    return any(marker in lowered for marker in markers)
+
+
+def _json_list_prefix(text: str) -> list[str] | None:
+    cleaned = _strip_fence(text)
+    if not cleaned.startswith("["):
+        return None
+    decoder = json.JSONDecoder()
+    cursor = 1
+    candidates = []
+    while cursor < len(cleaned):
+        while cursor < len(cleaned) and cleaned[cursor].isspace():
+            cursor += 1
+        if cursor >= len(cleaned) or cleaned[cursor] == "]":
+            break
+        if candidates:
+            if cleaned[cursor] != ",":
+                break
+            cursor += 1
+            while cursor < len(cleaned) and cleaned[cursor].isspace():
+                cursor += 1
+        if cursor >= len(cleaned) or cleaned[cursor] != '"':
+            break
+        try:
+            candidate, cursor = decoder.raw_decode(cleaned, cursor)
+        except json.JSONDecodeError:
+            break
+        if not isinstance(candidate, str) or not candidate.strip():
+            break
+        candidates.append(candidate)
+    return candidates or None
+
+
 def _line_candidates(text: str) -> list[str]:
     candidates = []
     for line in text.splitlines():
-        line = re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", line).strip().strip(",")
-        line = re.sub(r"^\[+\s*|\s*\]+$", "", line).strip().strip(",").strip()
-        if line in {"[", "]"}:
+        match = re.match(r"^\s*(?:[-*•]|\d+[.)])\s+(.+?)\s*$", line)
+        if not match:
             continue
+        line = match.group(1).strip().strip(",")
         if len(line) >= 2 and line[0] == line[-1] and line[0] in {"'", '"'}:
             try:
                 decoded = json.loads(line) if line.startswith('"') else line[1:-1]
@@ -69,14 +117,40 @@ def _line_candidates(text: str) -> list[str]:
     return candidates
 
 
+def _malformed_json_lines(text: str) -> list[str]:
+    candidates = []
+    for line in text.splitlines():
+        line = re.sub(r"^\s*\[+\s*|\s*\]+$", "", line).strip().strip(",").strip()
+        if not line:
+            continue
+        if len(line) >= 2 and line[0] == line[-1] and line[0] == '"':
+            try:
+                line = json.loads(line)
+            except json.JSONDecodeError:
+                line = line[1:-1]
+        elif line.startswith('"') or line.endswith('"'):
+            continue
+        candidates.append(line)
+    return candidates
+
+
 def _parse_candidates(text: str, n: int) -> list[str]:
     cleaned = _strip_fence(text)
+    if _contains_reasoning(cleaned):
+        return []
     try:
         parsed = json.loads(cleaned)
     except json.JSONDecodeError:
-        parsed = _line_candidates(cleaned)
+        parsed = _json_list_prefix(cleaned)
+        line_fallback = (
+            _malformed_json_lines(cleaned)
+            if cleaned.startswith("[")
+            else _line_candidates(cleaned)
+        )
+        if parsed is None or len(line_fallback) > len(parsed):
+            parsed = line_fallback
     if not isinstance(parsed, list):
-        parsed = _line_candidates(cleaned)
+        return []
 
     result = []
     seen = set()
@@ -85,6 +159,8 @@ def _parse_candidates(text: str, n: int) -> list[str]:
             continue
         candidate = item.strip()
         if not candidate:
+            continue
+        if _contains_reasoning(candidate):
             continue
         dedupe_key = re.sub(r"\s+", " ", candidate).casefold()
         if dedupe_key in seen:
@@ -103,6 +179,7 @@ def generate_candidates(
     condition: str,
     n: int,
     temperature: float,
+    max_tokens: int = 2500,
     return_response: bool = False,
 ) -> list[str] | tuple[list[str], LLMResponse]:
     """Generate and clean up to n candidates with one model request."""
@@ -112,12 +189,14 @@ def generate_candidates(
         raise ValueError("n must be at least 1.")
     if temperature < 0:
         raise ValueError("temperature must be non-negative.")
+    if max_tokens < 1:
+        raise ValueError("max_tokens must be at least 1.")
 
     messages = _build_messages(incoming_message, history_texts, condition, n)
     response = client.chat(
         messages=messages,
         temperature=temperature,
-        max_tokens=max(1500, n * 150),
+        max_tokens=max_tokens,
     )
     candidates = _parse_candidates(response.text, n)
     return (candidates, response) if return_response else candidates

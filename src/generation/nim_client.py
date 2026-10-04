@@ -21,6 +21,7 @@ class LLMResponse:
     prompt_tokens: int | None
     completion_tokens: int | None
     cached: bool
+    finish_reason: str | None = None
 
 
 class LLMClient(Protocol):
@@ -74,6 +75,7 @@ class NimClient:
         requests_per_minute: int = 30,
         max_retries: int = 3,
         backoff_seconds: float = 1.0,
+        timeout_s: float = 120.0,
         openai_client=None,
     ):
         repo_root = Path(__file__).resolve().parents[2]
@@ -91,14 +93,22 @@ class NimClient:
             raise ValueError("max_retries must be non-negative.")
         if backoff_seconds < 0:
             raise ValueError("backoff_seconds must be non-negative.")
+        if timeout_s <= 0:
+            raise ValueError("timeout_s must be positive.")
 
         self._api_key = api_key
         self.requests_per_minute = requests_per_minute
         self.max_retries = max_retries
         self.backoff_seconds = backoff_seconds
+        self.timeout_s = timeout_s
         self.cache_path = Path(cache_path) if cache_path else repo_root / "data" / "cache" / "nim_responses.jsonl"
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)
-        self._client = openai_client or OpenAI(base_url=self.BASE_URL, api_key=api_key)
+        self._client = openai_client or OpenAI(
+            base_url=self.BASE_URL,
+            api_key=api_key,
+            timeout=timeout_s,
+            max_retries=0,
+        )
         self._request_times: deque[float] = deque()
         self._rate_lock = threading.Lock()
 
@@ -135,6 +145,7 @@ class NimClient:
                         prompt_tokens=response.get("prompt_tokens"),
                         completion_tokens=response.get("completion_tokens"),
                         cached=True,
+                        finish_reason=response.get("finish_reason"),
                     )
         return None
 
@@ -154,6 +165,84 @@ class NimClient:
             raise ValueError("Refusing to cache data containing the configured API key.")
         with self.cache_path.open("a", encoding="utf-8") as cache_file:
             cache_file.write(serialized + "\n")
+
+    @staticmethod
+    def _complete_candidate_count(request: dict[str, object], text: str) -> int | None:
+        messages = request.get("messages", [])
+        prompt = "\n".join(
+            str(message.get("content", ""))
+            for message in messages
+            if isinstance(message, dict)
+        )
+        import re
+
+        match = re.search(r"Generate\s+(\d+)\s+distinct candidate replies", prompt)
+        if not match:
+            return None
+        expected = int(match.group(1))
+        try:
+            parsed = json.loads(text.strip())
+        except json.JSONDecodeError:
+            return None
+        if (
+            not isinstance(parsed, list)
+            or len(parsed) != expected
+            or any(not isinstance(item, str) or not item.strip() for item in parsed)
+        ):
+            return None
+        normalized = [item.strip().casefold() for item in parsed]
+        if len(set(normalized)) != expected:
+            return None
+        if any(
+            marker in text.casefold()
+            for marker in ("<think>", "</think>", "<analysis>", "</analysis>", "analysis:")
+        ):
+            return None
+        return expected
+
+    def _compatible_cache_lookup(
+        self,
+        model: str,
+        messages: Sequence[dict[str, str]],
+        temperature: float,
+        max_tokens: int,
+    ) -> LLMResponse | None:
+        if not self.cache_path.exists():
+            return None
+        matching = []
+        with self.cache_path.open("r", encoding="utf-8") as cache_file:
+            for line_number, line in enumerate(cache_file, start=1):
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(f"Invalid JSON in NIM cache at line {line_number}.") from exc
+                request = entry.get("request", {})
+                if (
+                    request.get("model") == model
+                    and request.get("messages") == list(messages)
+                    and request.get("temperature") == temperature
+                    and isinstance(request.get("max_tokens"), int)
+                    and request["max_tokens"] < max_tokens
+                ):
+                    matching.append((request["max_tokens"], entry))
+        for _, entry in sorted(matching, reverse=True, key=lambda pair: pair[0]):
+            response = entry.get("response", {})
+            text = response.get("text")
+            if not isinstance(text, str):
+                continue
+            if response.get("finish_reason") == "length":
+                continue
+            if self._complete_candidate_count(entry["request"], text) is None:
+                continue
+            return LLMResponse(
+                text=text,
+                latency_s=response["latency_s"],
+                prompt_tokens=response.get("prompt_tokens"),
+                completion_tokens=response.get("completion_tokens"),
+                cached=True,
+                finish_reason=response.get("finish_reason"),
+            )
+        return None
 
     def _acquire_rate_slot(self) -> None:
         interval = self.WINDOW_S / self.requests_per_minute
@@ -194,6 +283,11 @@ class NimClient:
         cached_response = self._cache_lookup(request_key)
         if cached_response is not None:
             return cached_response
+        cached_response = self._compatible_cache_lookup(
+            self.model, request["messages"], temperature, max_tokens
+        )
+        if cached_response is not None:
+            return cached_response
 
         for attempt in range(self.max_retries + 1):
             self._acquire_rate_slot()
@@ -218,14 +312,18 @@ class NimClient:
             latency_s = time.perf_counter() - started
             text = completion.choices[0].message.content
             if not isinstance(text, str):
-                raise RuntimeError("NIM response did not contain text content.")
+                raise RuntimeError(
+                    f"NIM response message.content was {type(text).__name__}, not text."
+                )
             usage = completion.usage
+            finish_reason = completion.choices[0].finish_reason
             response = LLMResponse(
                 text=text,
                 latency_s=latency_s,
                 prompt_tokens=usage.prompt_tokens if usage is not None else None,
                 completion_tokens=usage.completion_tokens if usage is not None else None,
                 cached=False,
+                finish_reason=finish_reason,
             )
             self._cache_append(request_key, request, response)
             return response

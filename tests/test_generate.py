@@ -22,7 +22,7 @@ def test_parses_json_list_in_one_request():
 
     assert candidates == ["Sure, I will send it.", "I can send it today."]
     assert len(fake.calls) == 1
-    assert fake.calls[0]["max_tokens"] == 1500
+    assert fake.calls[0]["max_tokens"] == 2500
 
 
 def test_parses_fenced_json_and_plain_lines():
@@ -43,6 +43,26 @@ def test_partial_malformed_output_keeps_usable_candidates():
     candidates, _ = _generate('["Yes.",\nnot valid json\n"No."]')
 
     assert candidates == ["Yes.", "not valid json", "No."]
+
+
+def test_truncated_json_list_recovers_only_complete_string_entries():
+    candidates, _ = _generate('["first reply", "second reply", "unterminated')
+
+    assert candidates == ["first reply", "second reply"]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '<think>Let me think through this.</think> ["safe-looking reply"]',
+        'Analysis: I should answer politely.\n["safe-looking reply"]',
+        '["safe-looking reply", "Let me think through the answer"]',
+    ],
+)
+def test_reasoning_text_never_leaks_into_candidates(text):
+    candidates, _ = _generate(text)
+
+    assert candidates == []
 
 
 def test_empty_output_returns_no_candidates():
