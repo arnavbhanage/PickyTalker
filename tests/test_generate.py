@@ -1,0 +1,90 @@
+import pytest
+
+from src.generation.generate import generate_candidates
+from src.generation.nim_client import FakeLLM
+
+
+def _generate(text, condition="neutral", history=None, n=5):
+    fake = FakeLLM([text])
+    candidates = generate_candidates(
+        fake,
+        incoming_message="Can you send the report?",
+        history_texts=history or [],
+        condition=condition,
+        n=n,
+        temperature=0.3,
+    )
+    return candidates, fake
+
+
+def test_parses_json_list_in_one_request():
+    candidates, fake = _generate('["Sure, I will send it.", "I can send it today."]')
+
+    assert candidates == ["Sure, I will send it.", "I can send it today."]
+    assert len(fake.calls) == 1
+    assert fake.calls[0]["max_tokens"] == 1500
+
+
+def test_parses_fenced_json_and_plain_lines():
+    fenced, _ = _generate('```json\n["Okay.", "I will do that."]\n```')
+    lines, _ = _generate("- Okay.\n- I will do that.")
+
+    assert fenced == ["Okay.", "I will do that."]
+    assert lines == ["Okay.", "I will do that."]
+
+
+def test_drops_duplicates_empty_values_and_non_string_items():
+    candidates, _ = _generate('["Yes.", "", " yes. ", null, "No."]')
+
+    assert candidates == ["Yes.", "No."]
+
+
+def test_partial_malformed_output_keeps_usable_candidates():
+    candidates, _ = _generate('["Yes.",\nnot valid json\n"No."]')
+
+    assert candidates == ["Yes.", "not valid json", "No."]
+
+
+def test_empty_output_returns_no_candidates():
+    candidates, _ = _generate(" \n ")
+
+    assert candidates == []
+
+
+def test_generation_failure_is_not_hidden():
+    fake = FakeLLM([RuntimeError("service unavailable")])
+
+    with pytest.raises(RuntimeError, match="service unavailable"):
+        generate_candidates(fake, "hello", [], "neutral", 2, 0.2)
+
+
+def test_can_return_call_metadata_for_cost_and_latency_accounting():
+    fake = FakeLLM(['["ok"]'])
+
+    candidates, response = generate_candidates(
+        fake,
+        "hello",
+        [],
+        "neutral",
+        1,
+        0.2,
+        return_response=True,
+    )
+
+    assert candidates == ["ok"]
+    assert response.cached is False
+    assert response.latency_s == 0.0
+
+
+def test_fewshot_and_instruction_conditions_use_only_their_own_style_context():
+    history = [f"past message {index}" for index in range(12)]
+    _, fewshot = _generate('["ok"]', condition="fewshot", history=history, n=1)
+    _, instruction = _generate('["ok"]', condition="instruction", history=history, n=1)
+    fewshot_prompt = fewshot.calls[0]["messages"][1]["content"]
+    instruction_prompt = instruction.calls[0]["messages"][1]["content"]
+
+    assert "past message 2" in fewshot_prompt
+    assert "past message 11" in fewshot_prompt
+    assert "Style instruction:" not in fewshot_prompt
+    assert "Style instruction:" in instruction_prompt
+    assert "Examples of the user's past messages" not in instruction_prompt

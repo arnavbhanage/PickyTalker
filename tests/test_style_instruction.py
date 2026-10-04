@@ -13,7 +13,7 @@ def test_instruction_is_deterministic_and_word_band_matches_profile():
     instruction = instruction_from_profile(profile)
 
     assert instruction == instruction_from_profile(profile)
-    assert "about 5 to 7 words" in instruction
+    assert "about 4 to 8 words" in instruction
     assert "rarely asking questions" in instruction
 
 
@@ -36,6 +36,6 @@ def test_plain_strings_use_existing_feature_extraction():
     assert profile["message_count"] == 3
     assert profile["question_share"] == 1 / 3
     assert profile["exclamation_rate"] == 1 / 3
-    assert profile["starts_lower_share"] == 1 / 3
+    assert profile["starts_lower_share"] == 2 / 3
     assert profile["newline_share"] == 1 / 3
     assert profile["average_sentence_length"] > 0

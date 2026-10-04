@@ -72,6 +72,20 @@ def test_retries_429_then_succeeds(tmp_path, monkeypatch):
     assert response.text == "generated reply"
 
 
+def test_retries_5xx_then_succeeds(tmp_path, monkeypatch):
+    nim, completions = _client(
+        tmp_path,
+        monkeypatch,
+        [_TransientError(503), _completion()],
+        max_retries=1,
+    )
+
+    response = nim.chat([{"role": "user", "content": "hello"}], temperature=0, max_tokens=10)
+
+    assert completions.calls == 2
+    assert response.text == "generated reply"
+
+
 def test_rate_cap_spaces_requests(tmp_path, monkeypatch):
     nim, completions = _client(
         tmp_path,
