@@ -749,6 +749,19 @@ This distinction will be maintained during evaluation.
 
 ---
 
+## How to reproduce
+
+1. Create or activate the local virtual environment in `.venv`.
+2. Install the Python requirements with `python -m pip install -r requirements.txt`.
+3. Install LightGBM when you need the learned-ranker notebook: `python -m pip install lightgbm`.
+4. Put the Enron sent-mail corpus at `data/processed/enron_messages.csv`.
+5. Run the project notebooks in order: `02_style_feature_extraction.ipynb`, `03_user_profile_analysis.ipynb`, `04_benchmark_and_baselines.ipynb`, then `05_learned_ranker.ipynb`.
+6. Run the test suite from the repo root with `python -m pytest -q`.
+
+The benchmark findings are saved under `docs/findings/` with names like `04_*.csv` and the learned-ranker outputs use names starting with `05_`.
+
+---
+
 ## Notebook 05: learned ranker
 
 To reproduce the learned-ranker workflow:
