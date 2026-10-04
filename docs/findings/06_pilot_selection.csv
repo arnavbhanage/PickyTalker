@@ -1,0 +1,68 @@
+item_id,user_id,picker,candidate,stylometry_similarity,normalized_edit_distance,lexical_similarity,ranker_score
+037cdba1de,9b79c8b0e5,random,"""Sally, thanks for the FW! I’ve opened the attached document and it matches the summary Kent mentioned.\nAre the numbers for the second quarter still under review",0.1394618539825972,0.8343023255813954,0.06930693069306931,0.12398851015967485
+037cdba1de,9b79c8b0e5,first,"Thanks for forwarding Kent's email, Sally! I’ve reviewed McMahon’s message and the attached file looks complete.
+Could you confirm whether the allocation figures for Q1 are final?
+Let me know if you need any further analysis.
+Looking forward to your update!",0.14061023095331038,0.7892441860465116,0.10619469026548672,-0.20862145417202396
+037cdba1de,9b79c8b0e5,ranker,"""Sally, thanks for the FW! I’ve opened the attached document and it matches the summary Kent mentioned.\nAre the numbers for the second quarter still under review",0.1394618539825972,0.8343023255813954,0.06930693069306931,0.12398851015967485
+20123faa32,ffb12f73b8,random,"Thanks for the heads‑up, Travis.
+I’m interested in how you envision the master plan influencing future commodity trading frameworks.",0.08137363867982009,0.778393351800554,0.078125,0.0902019273565475
+20123faa32,ffb12f73b8,first,"thanks for the enthusiasm, travis. i’m curious—what specific aspects of cross‑commodity master trading agreements do you hope to highlight at the meeting?",0.08387505905989112,0.7673130193905817,0.08955223880597014,-0.047650604976403416
+20123faa32,ffb12f73b8,ranker,"Thanks for the heads‑up, Travis.
+I’m interested in how you envision the master plan influencing future commodity trading frameworks.",0.08137363867982009,0.778393351800554,0.078125,0.0902019273565475
+3e42eebc25,a31a43c194,random,"""Hello everyone!\nI appreciate being included in this distribution list. Are there any specific action items assigned",0.08650420669202637,0.8943577430972389,0.009900990099009901,-0.2225001767120471
+3e42eebc25,a31a43c194,first,"Hi team!
+Thanks for looping me in on this thread. Could you let me know what the next steps are for the Enron Europe Global CounterParty discussion? Looking forward to your update! 🚀",0.11995116477474173,0.8487394957983193,0.05555555555555555,0.08274903680620087
+3e42eebc25,a31a43c194,ranker,"Hi team!
+Thanks for looping me in on this thread. Could you let me know what the next steps are for the Enron Europe Global CounterParty discussion? Looking forward to your update! 🚀",0.11995116477474173,0.8487394957983193,0.05555555555555555,0.08274903680620087
+66d4d54567,a0afd6458d,random,"""hey steve,\\n\\nsorry for the delay — got swamped. how are the markets treating you now? curious about that cash strength you mentioned. let me know if you",0.08392949410200287,0.8838289962825279,0.03773584905660377,-0.21358403054761563
+66d4d54567,a0afd6458d,first,"""hey steve,\\n\\nsorry for the delay — got swamped. how are the markets treating you now? curious about that cash strength you mentioned. let me know if you",0.08392949410200287,0.8838289962825279,0.03773584905660377,-0.21358403054761563
+66d4d54567,a0afd6458d,ranker,"""hey steve,\\n\\nsorry for the delay — got swamped. how are the markets treating you now? curious about that cash strength you mentioned. let me know if you",0.08392949410200287,0.8838289962825279,0.03773584905660377,-0.21358403054761563
+68dfa3c196,2363de00ed,random,"""hey suzanne, that belize deal sounds amazing! are the flights departing from houston? what hotel are we staying at? can't wait to hear more!!"",""Wow! Under $575 for airfare and five nights in Belize?!\\nAre the tickets refundable if plans change?\\nLet me know the departure airport and hotel name!\\nThanks!"",""hi suzanne,\\njust saw the belize offer—looks tempting!\\nwhat’s the baggage allowance included?\\nis travel insurance optional or required?\\nplease send the booking link when you can!\\nthanks!"",""Sounds like a great getaway! Could you confirm",0.11995754901483885,0.9171171171171171,0.023809523809523808,-0.5083570546451888
+68dfa3c196,2363de00ed,first,"""hey suzanne, that belize deal sounds amazing! are the flights departing from houston? what hotel are we staying at? can't wait to hear more!!"",""Wow! Under $575 for airfare and five nights in Belize?!\\nAre the tickets refundable if plans change?\\nLet me know the departure airport and hotel name!\\nThanks!"",""hi suzanne,\\njust saw the belize offer—looks tempting!\\nwhat’s the baggage allowance included?\\nis travel insurance optional or required?\\nplease send the booking link when you can!\\nthanks!"",""Sounds like a great getaway! Could you confirm",0.11995754901483885,0.9171171171171171,0.023809523809523808,-0.5083570546451888
+68dfa3c196,2363de00ed,ranker,"""hey suzanne, that belize deal sounds amazing! are the flights departing from houston? what hotel are we staying at? can't wait to hear more!!"",""Wow! Under $575 for airfare and five nights in Belize?!\\nAre the tickets refundable if plans change?\\nLet me know the departure airport and hotel name!\\nThanks!"",""hi suzanne,\\njust saw the belize offer—looks tempting!\\nwhat’s the baggage allowance included?\\nis travel insurance optional or required?\\nplease send the booking link when you can!\\nthanks!"",""Sounds like a great getaway! Could you confirm",0.11995754901483885,0.9171171171171171,0.023809523809523808,-0.5083570546451888
+84ae156222,9b79c8b0e5,random,"Thank you for the notification. I will log into eProcurement now to review the pending items in my inbox.
+Please let me know if there is a deadline for approval or any specific criteria I should consider.
+I appreciate the prompt reminder!",0.15479086784307808,0.8319327731092437,0.021739130434782608,0.0038997857403295514
+84ae156222,9b79c8b0e5,first,"Thank you for the notification. I will log into eProcurement now to review the pending items in my inbox.
+Please let me know if there is a deadline for approval or any specific criteria I should consider.
+I appreciate the prompt reminder!",0.15479086784307808,0.8319327731092437,0.021739130434782608,0.0038997857403295514
+84ae156222,9b79c8b0e5,ranker,"Thank you for the notification. I will log into eProcurement now to review the pending items in my inbox.
+Please let me know if there is a deadline for approval or any specific criteria I should consider.
+I appreciate the prompt reminder!",0.15479086784307808,0.8319327731092437,0.021739130434782608,0.0038997857403295514
+887be59175,56ff263f67,random,i hear you; what felt cocky to you?,0.03884627176451912,0.8691099476439791,0.05263157894736842,1.0627451273542061
+887be59175,56ff263f67,first,i’m sorry if i seemed pushy; just wanted us aligned.,0.03329308724566538,0.8272251308900523,0.023809523809523808,1.1352759059030961
+887be59175,56ff263f67,ranker,i’m sorry if i seemed pushy; just wanted us aligned.,0.03329308724566538,0.8272251308900523,0.023809523809523808,1.1352759059030961
+9496bf2df1,a31a43c194,random,"Got it, Kevin!
+I will examine the counterparties and send my approvals before the deadline.
+Could you resend the attachment if it didn’t come through?
+Thanks for coordinating!",0.1069256269624815,0.726890756302521,0.09259259259259259,-0.02851617503550272
+9496bf2df1,a31a43c194,first,"Thanks for the heads‑up, Kevin!
+I’ll review the attached list and confirm approvals by Friday 2 PM.
+Please let me know if you need any additional information from my side.
+Have a great day!",0.10011787522629001,0.726890756302521,0.19298245614035087,0.05193684887090079
+9496bf2df1,a31a43c194,ranker,"Thanks for the heads‑up, Kevin!
+I’ll review the attached list and confirm approvals by Friday 2 PM.
+Please let me know if you need any additional information from my side.
+Have a great day!",0.10011787522629001,0.726890756302521,0.19298245614035087,0.05193684887090079
+a1ee6fb48f,56ff263f67,random,"no, i didn't drive that far; i caught the game online instead.",0.05687625396762181,0.7741935483870968,0.0625,1.1258765461639613
+a1ee6fb48f,56ff263f67,first,"no, i didn't drive that far; i caught the game online instead.",0.05687625396762181,0.7741935483870968,0.0625,1.1258765461639613
+a1ee6fb48f,56ff263f67,ranker,"i figured the local feed would suffice, so i didn't go.",0.04707286441024859,0.7818181818181819,0.06666666666666667,1.1352759059030961
+a7c0b4f463,56ff263f67,random,"i went to west high in denver. i enjoy enron, though it's busy. i don't know john or sonya.",0.0552916530792047,0.7444933920704846,0.0851063829787234,1.2018712500924689
+a7c0b4f463,56ff263f67,first,"i went to west high in denver. i enjoy enron, though it's busy. i don't know john or sonya.",0.0552916530792047,0.7444933920704846,0.0851063829787234,1.2018712500924689
+a7c0b4f463,56ff263f67,ranker,"i went to west high in denver. i enjoy enron, though it's busy. i don't know john or sonya.",0.0552916530792047,0.7444933920704846,0.0851063829787234,1.2018712500924689
+ba740b73b3,2363de00ed,random,thanks for the update kam! i appreciate the fix on ladwap billing. could you share the revised report or any docs? let me know if you need anything else from my side!,0.12482553827272183,0.8554216867469879,0.08823529411764706,1.0919254052286407
+ba740b73b3,2363de00ed,first,thanks for the update kam! i appreciate the fix on ladwap billing. could you share the revised report or any docs? let me know if you need anything else from my side!,0.12482553827272183,0.8554216867469879,0.08823529411764706,1.0919254052286407
+ba740b73b3,2363de00ed,ranker,thanks for the update kam! i appreciate the fix on ladwap billing. could you share the revised report or any docs? let me know if you need anything else from my side!,0.12482553827272183,0.8554216867469879,0.08823529411764706,1.0919254052286407
+da6bad0f19,50692538d6,random,"Sure, I can take over the Plains/Enron contract review. Could you send me the latest documents and any deadlines you have in mind? Let me know if you need a brief update by end of day.",0.12579892949600235,0.8532608695652174,0.05263157894736842,-0.0885474808202695
+da6bad0f19,50692538d6,first,"Sure, I can take over the Plains/Enron contract review. Could you send me the latest documents and any deadlines you have in mind? Let me know if you need a brief update by end of day.",0.12579892949600235,0.8532608695652174,0.05263157894736842,-0.0885474808202695
+da6bad0f19,50692538d6,ranker,Happy to help. Please send over the contract files and any timeline constraints. I’ll keep you posted with updates every morning.,0.09464195502573679,0.813953488372093,0.03571428571428571,-0.011849797842533991
+db6b292a91,432d4b6ac8,random,"hey there,
+I'll send my cv via email. ping me if you'd like to chat first!",0.055375222555331435,0.8243243243243243,0.04,1.137825779569458
+db6b292a91,432d4b6ac8,first,"hey craig,
+I'll email my resume today. Let me know if you'd rather talk on the phone!",0.05714031254499615,0.7647058823529411,0.08,0.975180027193525
+db6b292a91,432d4b6ac8,ranker,"hey there,
+I'll send my cv via email. ping me if you'd like to chat first!",0.055375222555331435,0.8243243243243243,0.04,1.137825779569458
+e195abb0ea,2363de00ed,random,"""thanks for the offer!\ncan you tell me what channels are included?",0.0822774312786495,0.7910447761194029,0.05263157894736842,-0.3987486091421532
+e195abb0ea,2363de00ed,first,"""thanks for the offer!\ncan you tell me what channels are included?",0.0822774312786495,0.7910447761194029,0.05263157894736842,-0.3987486091421532
+e195abb0ea,2363de00ed,ranker,"""thanks for the offer!\ncan you tell me what channels are included?",0.0822774312786495,0.7910447761194029,0.05263157894736842,-0.3987486091421532
