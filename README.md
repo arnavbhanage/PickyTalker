@@ -746,3 +746,17 @@ This distinction will be maintained during evaluation.
 **Derived features remain reproducible.**
 
 **User preferences are treated as observations, not assumptions.**
+
+---
+
+## Notebook 05: learned ranker
+
+To reproduce the learned-ranker workflow:
+
+1. Create or activate the project virtual environment in `.venv`.
+2. Install dependencies with `python -m pip install -r requirements.txt` and `python -m pip install lightgbm`.
+3. Put the Enron corpus at `data/processed/enron_messages.csv`.
+4. Run notebooks in order: `02_style_feature_extraction.ipynb`, `03_user_profile_analysis.ipynb`, `04_benchmark_and_baselines.ipynb`, then `05_learned_ranker.ipynb`.
+5. Run tests from the repo root with `python -m pytest -q`.
+
+The learned-ranker notebook saves result tables under `docs/findings/` with names starting `05_`.

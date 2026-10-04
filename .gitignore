@@ -5,6 +5,10 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 data/processed/*.csv
+data/processed/enron_messages.csv
+data/processed/benchmark_v0.csv
+data/processed/benchmark_v1.csv
+models/
 models/saved_models/*
 models/formality_model/*
 models/response_ranker/*
