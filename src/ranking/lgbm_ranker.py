@@ -59,6 +59,9 @@ def build_training_matrix(space, bench_train, m=None, k=10.0, seed=0, rng=None, 
         ys.append(np.array([1] + [0] * (len(cand_ids) - 1), dtype=float))
         groups.append(len(cand_ids))
 
+    if not Xs:
+        raise ValueError("No lineups available to build the ranker training matrix.")
+
     X = np.vstack(Xs)
     y = np.concatenate(ys)
     return X, y, np.array(groups, dtype=int), feat_names
@@ -109,6 +112,7 @@ def evaluate_ranker(space, bench, model, m=None, k=10.0, seed=0, drop_groups=())
     """Evaluate a trained ranker in the same table format used by the benchmark."""
     out = []
     rng = np.random.default_rng(seed)
+    model_names = getattr(model, "feature_names_", None)
     for item_id, user, tier, neg_ids in bench[["item_id", "user_id", "tier", "neg_ids"]].itertuples(index=False):
         cand_ids = _lineup_candidates(item_id, neg_ids)
         X, _, _, feat_names = build_training_matrix(
@@ -117,6 +121,10 @@ def evaluate_ranker(space, bench, model, m=None, k=10.0, seed=0, drop_groups=())
         )
         if len(X) == 0:
             continue
+        if model_names is not None and len(model_names) > 0:
+            name_to_idx = {name: i for i, name in enumerate(feat_names)}
+            order = [name_to_idx.get(name) for name in model_names]
+            X = X[:, order]
         scores = model.predict(X)
         best = int(np.argmax(scores))
         others = np.asarray(scores[1:])
