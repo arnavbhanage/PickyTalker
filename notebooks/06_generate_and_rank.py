@@ -40,7 +40,7 @@ N_CANDIDATES = 5
 TEMPERATURE = 0.6
 PILOT_SIZE = 20
 FULL_SIZE = 100
-RUN_FULL = False
+RUN_FULL = True
 SEED = 0
 
 if not os.getenv("NIM_MODEL"):
@@ -205,6 +205,28 @@ def metric_summary(candidates):
     )
 
 
+def user_level_summary(frame, group_column, metric_names, n_boot=1000, seed=SEED):
+    rng = np.random.default_rng(seed)
+    rows = []
+    for group_value, group in frame.groupby(group_column, sort=True):
+        user_means = group.groupby("user_id")[metric_names].mean()
+        values = user_means.to_numpy(dtype=float)
+        users = len(values)
+        if users == 0:
+            continue
+        boot_means = np.array([
+            values[rng.integers(0, users, users)].mean(axis=0)
+            for _ in range(n_boot)
+        ])
+        row = {group_column: group_value, "users": users}
+        for index, metric in enumerate(metric_names):
+            row[f"mean_{metric}"] = float(values[:, index].mean())
+            row[f"ci_low_{metric}"] = float(np.percentile(boot_means[:, index], 2.5))
+            row[f"ci_high_{metric}"] = float(np.percentile(boot_means[:, index], 97.5))
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def selection_test(candidates):
     rng = np.random.default_rng(SEED)
     rows = []
@@ -346,11 +368,33 @@ if RUN_FULL:
     full_calls, full_candidates = run_generation(full_items)
     full_stats = call_stats(full_calls)
     full_metrics = metric_summary(full_candidates)
+    independent_metrics = [
+        "stylometry_similarity",
+        "normalized_edit_distance",
+        "lexical_similarity",
+        "ranker_score",
+    ]
+    full_metrics_user_ci = user_level_summary(
+        full_candidates, "condition", independent_metrics
+    )
     full_selection = selection_test(full_candidates)
+    full_selection_user_ci = user_level_summary(
+        full_selection,
+        "picker",
+        ["stylometry_similarity", "normalized_edit_distance", "lexical_similarity", "ranker_score"],
+    )
     full_calls.to_csv(FINDINGS_DIR / "06_full_call_stats_raw.csv", index=False)
     full_stats.to_csv(FINDINGS_DIR / "06_full_call_stats.csv", index=False)
     full_candidates.to_csv(FINDINGS_DIR / "06_full_candidate_metrics.csv", index=False)
     full_metrics.to_csv(FINDINGS_DIR / "06_full_metric_summary.csv", index=False)
+    full_metrics_user_ci.to_csv(FINDINGS_DIR / "06_full_metric_user_ci.csv", index=False)
     full_selection.to_csv(FINDINGS_DIR / "06_full_selection.csv", index=False)
+    full_selection_user_ci.to_csv(FINDINGS_DIR / "06_full_selection_user_ci.csv", index=False)
+    print("Full-run call and token accounting:")
+    display(full_stats.round(3))
+    print("Full-run candidate metrics with user-level 95% confidence intervals:")
+    display(full_metrics_user_ci.round(3))
+    print("Full-run selection test with user-level 95% confidence intervals:")
+    display(full_selection_user_ci.round(3))
 else:
     print("Full run is gated. Set RUN_FULL=True only after pilot approval.")
