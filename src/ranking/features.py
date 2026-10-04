@@ -1,3 +1,5 @@
+import hashlib
+
 import numpy as np
 import pandas as pd
 
@@ -12,12 +14,16 @@ FEATURE_GROUPS = {
 }
 
 
+def _stable_user_seed(user):
+    digest = hashlib.sha256(str(user).encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], byteorder="big", signed=False)
+
+
 def _profile_stats(space, user, m=None, k=10.0, rng=None):
     """Return the user mean and variance under the benchmark's profile model."""
     idx = space.hist_idx.get(user, np.array([], dtype=int))
     if m is not None and len(idx) > m:
-        if rng is None:
-            rng = np.random.default_rng(0)
+        rng = np.random.default_rng(_stable_user_seed(user))
         idx = rng.choice(idx, m, replace=False)
     if len(idx) == 0:
         return np.zeros(space.d), np.ones(space.d)
@@ -54,7 +60,7 @@ def candidate_features(space, user, cand_rows, m=None, k=10.0, rng=None):
         Names of the columns in the feature matrix.
     """
     if rng is None:
-        rng = np.random.default_rng(0)
+        rng = np.random.default_rng(_stable_user_seed(user))
 
     if isinstance(cand_rows, pd.DataFrame):
         cand_rows = cand_rows["message_id"].astype(str).tolist()
@@ -65,9 +71,12 @@ def candidate_features(space, user, cand_rows, m=None, k=10.0, rng=None):
     abs_delta = np.abs(delta)
     std_dev = delta / np.sqrt(np.maximum(var, 1e-8))
 
-    llr = -0.5 * np.sum(np.log(var) + (z - mu) ** 2 / var, axis=1)
-    llr_pop = -0.5 * np.sum(np.log(1.0) + (z - 0.0) ** 2 / 1.0, axis=1)
-    llr_parts = llr - llr_pop
+    llr_parts = -0.5 * (
+        np.log(np.maximum(var, 1e-8))
+        + (z - mu) ** 2 / np.maximum(var, 1e-8)
+        - (np.log(1.0) + (z - 0.0) ** 2 / 1.0)
+    )
+    llr_total = llr_parts.sum(axis=1)
 
     n_hist = len(space.hist_idx.get(user, np.array([], dtype=int)))
     if m is not None and n_hist > m:
@@ -86,7 +95,8 @@ def candidate_features(space, user, cand_rows, m=None, k=10.0, rng=None):
         delta,
         abs_delta,
         std_dev,
-        (z - mu) ** 2 / np.maximum(var, 1e-8),
+        llr_parts,
+        llr_total[:, None],
         np.full(len(cand_rows), np.log1p(n_hist), dtype=float),
         np.full(len(cand_rows), shrinkage_weight, dtype=float),
     ])
