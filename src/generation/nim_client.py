@@ -139,6 +139,18 @@ class NimClient:
                     raise ValueError(f"Invalid JSON in NIM cache at line {line_number}.") from exc
                 if entry.get("request_key") == request_key:
                     response = entry["response"]
+                    text = response.get("text")
+                    request = entry.get("request", {})
+                    expected_candidates = self._expected_candidate_count(request)
+                    if (
+                        response.get("finish_reason") == "length"
+                        or not isinstance(text, str)
+                        or (
+                            expected_candidates is not None
+                            and self._complete_candidate_count(request, text) is None
+                        )
+                    ):
+                        continue
                     return LLMResponse(
                         text=response["text"],
                         latency_s=response["latency_s"],
@@ -167,7 +179,7 @@ class NimClient:
             cache_file.write(serialized + "\n")
 
     @staticmethod
-    def _complete_candidate_count(request: dict[str, object], text: str) -> int | None:
+    def _expected_candidate_count(request: dict[str, object]) -> int | None:
         messages = request.get("messages", [])
         prompt = "\n".join(
             str(message.get("content", ""))
@@ -177,9 +189,13 @@ class NimClient:
         import re
 
         match = re.search(r"Generate\s+(\d+)\s+distinct candidate replies", prompt)
-        if not match:
+        return int(match.group(1)) if match else None
+
+    @classmethod
+    def _complete_candidate_count(cls, request: dict[str, object], text: str) -> int | None:
+        expected = cls._expected_candidate_count(request)
+        if expected is None:
             return None
-        expected = int(match.group(1))
         try:
             parsed = json.loads(text.strip())
         except json.JSONDecodeError:

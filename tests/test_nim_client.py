@@ -164,6 +164,26 @@ def test_complete_lower_budget_json_response_is_reused_but_truncated_response_is
     assert fresh_completions.calls == 1
 
 
+def test_exact_budget_truncated_response_is_not_reused(tmp_path, monkeypatch):
+    nim, completions = _client(
+        tmp_path,
+        monkeypatch,
+        [
+            _completion(text='["one", "unfinished', finish_reason="length"),
+            _completion(text='["one", "two"]'),
+        ],
+    )
+    messages = [{"role": "user", "content": "Generate 2 distinct candidate replies."}]
+
+    first = nim.chat(messages, temperature=0, max_tokens=2500)
+    second = nim.chat(messages, temperature=0, max_tokens=2500)
+
+    assert first.finish_reason == "length"
+    assert second.cached is False
+    assert second.text == '["one", "two"]'
+    assert completions.calls == 2
+
+
 def test_api_key_never_appears_in_logs_or_cache(tmp_path, monkeypatch, caplog):
     secret = "test-key-never-log-or-cache"
     nim, _ = _client(tmp_path, monkeypatch, [_completion()])
