@@ -190,6 +190,8 @@ def _parse_strict_json_candidates(text: str, n: int) -> list[str]:
         parsed = json.loads(cleaned)
     except json.JSONDecodeError:
         return []
+    if isinstance(parsed, dict) and set(parsed) == {"candidates"}:
+        parsed = parsed["candidates"]
     if (
         not isinstance(parsed, list)
         or len(parsed) != n
@@ -197,11 +199,49 @@ def _parse_strict_json_candidates(text: str, n: int) -> list[str]:
     ):
         return []
     candidates = [item.strip() for item in parsed]
-    if len({re.sub(r"\s+", " ", item).casefold() for item in candidates}) != n:
+    if len({_candidate_key(item) for item in candidates}) != n:
         return []
-    if any(_contains_reasoning(item) for item in candidates):
+    if any(_contains_non_reply_content(item) for item in candidates):
         return []
     return candidates
+
+
+def _candidate_key(candidate: str) -> str:
+    return re.sub(r"[\W_]+", "", candidate.casefold())
+
+
+def _contains_non_reply_content(text: str) -> bool:
+    lowered = text.casefold().strip()
+    markers = (
+        "as an ai",
+        "as a language model",
+        "i am an ai",
+        "i'm an ai",
+        "here's a thinking process",
+        "analyze user input",
+        "analyze the request",
+        "the user asks",
+        "we need to generate",
+        "we need to reply",
+        "let's craft",
+        "i should provide",
+        "i will generate",
+        "candidate reply",
+        "response options",
+        "incoming message:",
+        "incoming message content:",
+        "style instruction:",
+        "**task:**",
+        "**constraints:**",
+        "**analysis:**",
+    )
+    if any(marker in lowered for marker in markers):
+        return True
+    if lowered.startswith(("```", "{", "[")):
+        return True
+    if _contains_reasoning(lowered):
+        return True
+    return False
 
 
 def generate_candidates(
@@ -226,10 +266,18 @@ def generate_candidates(
         raise ValueError("max_tokens must be at least 1.")
 
     messages = _build_messages(incoming_message, history_texts, condition, n)
+    response_format = None
+    if strict_json:
+        response_format = {"type": "json_object"}
+        messages[0]["content"] += (
+            " Format the JSON object with exactly one key named "
+            '"candidates", whose value is the requested array.'
+        )
     response = client.chat(
         messages=messages,
         temperature=temperature,
         max_tokens=max_tokens,
+        response_format=response_format,
     )
     candidates = (
         _parse_strict_json_candidates(response.text, n)

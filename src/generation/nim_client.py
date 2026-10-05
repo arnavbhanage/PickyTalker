@@ -30,6 +30,7 @@ class LLMClient(Protocol):
         messages: Sequence[dict[str, str]],
         temperature: float,
         max_tokens: int,
+        response_format: dict[str, object] | None = None,
     ) -> LLMResponse:
         ...
 
@@ -44,11 +45,13 @@ class FakeLLM:
         messages: Sequence[dict[str, str]],
         temperature: float,
         max_tokens: int,
+        response_format: dict[str, object] | None = None,
     ) -> LLMResponse:
         self.calls.append({
             "messages": [dict(message) for message in messages],
             "temperature": temperature,
             "max_tokens": max_tokens,
+            "response_format": response_format,
         })
         if not self._responses:
             raise RuntimeError("FakeLLM has no queued response.")
@@ -121,6 +124,7 @@ class NimClient:
         messages: Sequence[dict[str, str]],
         temperature: float,
         max_tokens: int,
+        response_format: dict[str, object] | None = None,
     ) -> str:
         payload = {
             "model": model,
@@ -128,6 +132,8 @@ class NimClient:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+        if response_format is not None:
+            payload["response_format"] = response_format
         serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
@@ -225,6 +231,7 @@ class NimClient:
         messages: Sequence[dict[str, str]],
         temperature: float,
         max_tokens: int,
+        response_format: dict[str, object] | None = None,
     ) -> LLMResponse | None:
         if not self.cache_path.exists():
             return None
@@ -240,6 +247,7 @@ class NimClient:
                     request.get("model") == model
                     and request.get("messages") == list(messages)
                     and request.get("temperature") == temperature
+                    and request.get("response_format") == response_format
                     and isinstance(request.get("max_tokens"), int)
                     and request["max_tokens"] < max_tokens
                 ):
@@ -291,6 +299,7 @@ class NimClient:
         messages: Sequence[dict[str, str]],
         temperature: float,
         max_tokens: int,
+        response_format: dict[str, object] | None = None,
     ) -> LLMResponse:
         request = {
             "model": self.model,
@@ -298,17 +307,30 @@ class NimClient:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        request_key = self._request_key(self.model, messages, temperature, max_tokens)
+        if response_format is not None:
+            request["response_format"] = response_format
+        request_key = self._request_key(
+            self.model,
+            messages,
+            temperature,
+            max_tokens,
+            response_format=response_format,
+        )
         if self.cache_enabled:
             cached_response = self._cache_lookup(request_key)
             if cached_response is not None:
                 return cached_response
             cached_response = self._compatible_cache_lookup(
-                self.model, request["messages"], temperature, max_tokens
+                self.model,
+                request["messages"],
+                temperature,
+                max_tokens,
+                response_format=response_format,
             )
             if cached_response is not None:
                 return cached_response
 
+        timeout_retries = 0
         for attempt in range(self.max_retries + 1):
             self._acquire_rate_slot()
             started = time.perf_counter()
@@ -318,15 +340,31 @@ class NimClient:
                     messages=request["messages"],
                     temperature=temperature,
                     max_tokens=max_tokens,
+                    response_format=response_format,
                 )
             except Exception as exc:
                 status_code = getattr(exc, "status_code", None)
                 retryable = status_code == 429 or (
                     isinstance(status_code, int) and 500 <= status_code <= 599
                 )
-                if not retryable or attempt >= self.max_retries:
+                timeout_error = type(exc).__name__ in {
+                    "APITimeoutError",
+                    "ConnectTimeout",
+                    "ReadTimeout",
+                    "Timeout",
+                }
+                can_retry_timeout = (
+                    timeout_error
+                    and timeout_retries < 1
+                    and attempt < self.max_retries
+                )
+                if not retryable and not can_retry_timeout:
                     raise
-                time.sleep(self.backoff_seconds * (2 ** attempt))
+                if retryable and attempt >= self.max_retries:
+                    raise
+                if can_retry_timeout:
+                    timeout_retries += 1
+                time.sleep(self.backoff_seconds * (2 ** min(attempt, 5)))
                 continue
 
             latency_s = time.perf_counter() - started

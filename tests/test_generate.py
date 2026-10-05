@@ -82,6 +82,27 @@ def test_strict_json_rejects_analysis_and_requires_distinct_complete_candidates(
         "reply one",
         "reply two",
     ]
+    assert _parse_strict_json_candidates(
+        '{"candidates":["reply one","reply two"]}',
+        2,
+    ) == ["reply one", "reply two"]
+    assert _parse_strict_json_candidates('["Sure!","sure"]', 2) == []
+    assert _parse_strict_json_candidates('["As an AI, I would say yes.","No."]', 2) == []
+
+
+def test_api_generation_requests_json_object_mode():
+    fake = FakeLLM(['{"candidates":["reply one","reply two"]}'])
+    candidates = generate_candidates(
+        fake,
+        "hello",
+        [],
+        "instruction",
+        2,
+        0.2,
+        strict_json=True,
+    )
+    assert candidates == ["reply one", "reply two"]
+    assert fake.calls[0]["response_format"] == {"type": "json_object"}
 
 
 def test_generation_failure_is_not_hidden():

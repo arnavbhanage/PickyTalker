@@ -11,6 +11,10 @@ class _TransientError(Exception):
         self.status_code = status_code
 
 
+class APITimeoutError(Exception):
+    pass
+
+
 def _completion(text="generated reply", prompt_tokens=11, completion_tokens=4, finish_reason="stop"):
     return SimpleNamespace(
         choices=[SimpleNamespace(message=SimpleNamespace(content=text), finish_reason=finish_reason)],
@@ -86,6 +90,34 @@ def test_retries_5xx_then_succeeds(tmp_path, monkeypatch):
 
     assert completions.calls == 2
     assert response.text == "generated reply"
+
+
+def test_retries_one_timeout_then_succeeds(tmp_path, monkeypatch):
+    nim, completions = _client(
+        tmp_path,
+        monkeypatch,
+        [APITimeoutError("timeout"), _completion()],
+        max_retries=2,
+    )
+    response = nim.chat([{"role": "user", "content": "hello"}], 0, 10)
+    assert response.text == "generated reply"
+    assert completions.calls == 2
+
+
+def test_does_not_retry_retired_model_410(tmp_path, monkeypatch):
+    nim, completions = _client(
+        tmp_path,
+        monkeypatch,
+        [_TransientError(410), _completion()],
+        max_retries=3,
+    )
+    try:
+        nim.chat([{"role": "user", "content": "hello"}], 0, 10)
+    except _TransientError as exc:
+        assert exc.status_code == 410
+    else:
+        raise AssertionError("A retired-model response should be raised.")
+    assert completions.calls == 1
 
 
 def test_rate_cap_spaces_requests(tmp_path, monkeypatch):

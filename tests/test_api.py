@@ -81,6 +81,7 @@ def test_health_profile_and_rank_do_not_need_llm(api):
     assert [row["rank"] for row in rows] == [1, 2]
     for row in rows:
         assert row["style_score"] == pytest.approx(sum(row["contributions"].values()))
+        assert "total" not in row["contributions"]
 
 
 def test_generate_and_respond_return_candidates_and_llm_metadata(api):
