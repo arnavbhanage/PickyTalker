@@ -18,3 +18,15 @@ data/external/*
 
 .env
 data/cache/
+frontend/CLAUDE.md
+frontend/AGENTS.md
+frontend/public/file.svg
+frontend/public/globe.svg
+
+frontend/public/next.svg
+frontend/public/vercel.svg
+frontend/public/window.svg
+frontend/src/app/favicon.ico
+frontend/src/lib/links.ts
+frontend/postcss.config.mjs
+frontend/next.config.ts
