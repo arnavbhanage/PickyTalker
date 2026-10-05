@@ -33,6 +33,16 @@ def rank_candidates(
         range(len(candidates)),
         key=lambda index: (-scored.ranker_scores[index], index),
     )
+    labels = {
+        "log_words": "message length",
+        "avg_sent_len": "average sentence length",
+        "punct_density": "punctuation density",
+        "n_questions": "question use",
+        "n_exclam": "exclamation use",
+        "caps_ratio": "capitalization",
+        "starts_lower": "lowercase starts",
+        "has_newline": "line-break use",
+    }
     ranked = []
     for rank, index in enumerate(order, start=1):
         contributions = scored.style_contributions[index]
@@ -43,9 +53,9 @@ def rank_candidates(
         )[:3]
         reasons = [
             (
-                f"{feature.replace('_', ' ')} contributes positively to the match."
+                f"{labels.get(feature, feature.replace('_', ' '))} contributes positively to the style match."
                 if value >= 0
-                else f"{feature.replace('_', ' ')} contributes negatively to the match."
+                else f"{labels.get(feature, feature.replace('_', ' '))} contributes negatively to the style match."
             )
             for feature, value in strongest
         ]

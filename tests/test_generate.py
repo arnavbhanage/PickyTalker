@@ -1,6 +1,6 @@
 import pytest
 
-from src.generation.generate import generate_candidates
+from src.generation.generate import _parse_strict_json_candidates, generate_candidates
 from src.generation.nim_client import FakeLLM
 
 
@@ -69,6 +69,19 @@ def test_empty_output_returns_no_candidates():
     candidates, _ = _generate(" \n ")
 
     assert candidates == []
+
+
+def test_strict_json_rejects_analysis_and_requires_distinct_complete_candidates():
+    assert _parse_strict_json_candidates(
+        'Here is a thinking process:\n["reply one", "reply two"]',
+        2,
+    ) == []
+    assert _parse_strict_json_candidates('["reply one", "reply one"]', 2) == []
+    assert _parse_strict_json_candidates('["reply one"]', 2) == []
+    assert _parse_strict_json_candidates('["reply one", "reply two"]', 2) == [
+        "reply one",
+        "reply two",
+    ]
 
 
 def test_generation_failure_is_not_hidden():

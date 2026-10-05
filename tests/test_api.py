@@ -203,14 +203,32 @@ def test_llm_410_is_mapped_to_safe_502(api):
 
 def test_malformed_llm_output_is_safe_502(api):
     client, application = api
-    application.dependency_overrides[deps.get_llm_client] = lambda: FakeLLM(["not json"])
+    fake = FakeLLM(["Here is a thinking process.", "Here is a thinking process."])
+    application.dependency_overrides[deps.get_llm_client] = lambda: fake
     response = client.post(
         "/generate",
         json={"history": _history(), "incoming": "incoming marker", "n": 1},
     )
     assert response.status_code == 502
     assert response.json()["detail"]["upstream_status_code"] is None
-    assert "not json" not in response.text
+    assert "thinking process" not in response.text
+    assert len(fake.calls) == 2
+
+
+def test_generate_retries_malformed_output_once_then_returns_meta(api):
+    client, application = api
+    fake = FakeLLM([
+        "Here is a thinking process.",
+        '["usable reply one", "usable reply two"]',
+    ])
+    application.dependency_overrides[deps.get_llm_client] = lambda: fake
+    response = client.post(
+        "/generate",
+        json={"history": _history(), "incoming": "incoming marker", "n": 2},
+    )
+    assert response.status_code == 200
+    assert len(fake.calls) == 2
+    assert response.json()["meta"]["llm_calls"] == 2
 
 
 def test_missing_artifacts_return_503_but_health_and_profile_work(tmp_path, monkeypatch):

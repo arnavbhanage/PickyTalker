@@ -50,19 +50,26 @@ def _require_llm(client):
 def _generate(client, history, incoming: str, n: int, condition: str) -> tuple[list[str], dict]:
     _require_llm(client)
     started = time.perf_counter()
-    try:
-        candidates, response = generate_candidates(
-            client,
-            incoming_message=incoming,
-            history_texts=_bounded_history(history),
-            condition=condition,
-            n=n,
-            temperature=0.6,
-            max_tokens=2500,
-            return_response=True,
-        )
-    except Exception as exc:
-        raise _llm_failure(exc) from None
+    responses = []
+    candidates = []
+    for _ in range(2):
+        try:
+            candidates, response = generate_candidates(
+                client,
+                incoming_message=incoming,
+                history_texts=_bounded_history(history),
+                condition=condition,
+                n=n,
+                temperature=0.6,
+                max_tokens=2500,
+                return_response=True,
+                strict_json=True,
+            )
+        except Exception as exc:
+            raise _llm_failure(exc) from None
+        responses.append(response)
+        if len(candidates) == n:
+            break
     if len(candidates) != n:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -71,13 +78,19 @@ def _generate(client, history, incoming: str, n: int, condition: str) -> tuple[l
                 "upstream_status_code": None,
             },
         )
-    latency = response.latency_s or (time.perf_counter() - started)
+    latency = sum(response.latency_s for response in responses)
+    if latency <= 0:
+        latency = time.perf_counter() - started
     metadata = {
         "latency_ms": latency * 1000.0,
-        "llm_calls": 0 if response.cached else 1,
-        "cached_calls": int(response.cached),
-        "prompt_tokens": response.prompt_tokens,
-        "completion_tokens": response.completion_tokens,
+        "llm_calls": sum(not response.cached for response in responses),
+        "cached_calls": sum(response.cached for response in responses),
+        "prompt_tokens": sum(
+            response.prompt_tokens or 0 for response in responses
+        ),
+        "completion_tokens": sum(
+            response.completion_tokens or 0 for response in responses
+        ),
         "model": getattr(client, "model", None) or os.getenv("NIM_MODEL"),
     }
     return candidates, metadata
