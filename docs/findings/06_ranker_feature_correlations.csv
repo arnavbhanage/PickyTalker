@@ -1,0 +1,8 @@
+feature_a,feature_b,pearson_r,absolute_r
+delta_n_questions,std_n_questions,0.9985499820127675,0.9985499820127675
+delta_avg_sent_len,std_avg_sent_len,0.9954800680377809,0.9954800680377809
+delta_log_words,std_log_words,0.9901049698684242,0.9901049698684242
+delta_has_newline,std_has_newline,0.9898216797175048,0.9898216797175048
+z_punct_density,delta_punct_density,0.9839954968331548,0.9839954968331548
+z_n_questions,std_n_questions,0.9816414987159671,0.9816414987159671
+z_avg_sent_len,delta_avg_sent_len,0.9808757138096104,0.9808757138096104

@@ -90,9 +90,10 @@ Each ranked item contains `candidate`, `rank`, `ranker_score`, `style_score`,
 
 Asks the configured NVIDIA NIM model for 1–8 distinct replies. The default
 condition is `instruction`; alternatives are `neutral` and `fewshot`. The API
-accepts only a complete JSON list of distinct reply strings. If the output is
-malformed or contains recognizable reasoning/task notes after one retry, the
-request fails safely rather than returning that text as a reply.
+requests structured JSON and accepts either a complete JSON list of distinct
+reply strings or an object containing only a `candidates` list. If the output
+is malformed or contains recognizable reasoning/task notes after one retry,
+the request fails safely rather than returning that text as a reply.
 
 ```powershell
 $body = @{

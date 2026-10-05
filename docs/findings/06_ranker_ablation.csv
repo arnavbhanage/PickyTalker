@@ -1,0 +1,2 @@
+experiment,training_users,training_lineups,validation_users,tier,recall_at_1,ci_low,ci_high,mrr
+drop_per_feature_llrs_keep_total_llr,67,5620,13,content_and_length,0.12163230586617685,0.07839777527579944,0.1635149487609165,0.33243810950418823
