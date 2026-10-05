@@ -6,6 +6,10 @@ from typing import Sequence
 
 from src.generation.nim_client import LLMClient, LLMResponse
 from src.generation.style_instruction import build_profile_from_texts, instruction_from_profile
+from src.generation.strict_json import (
+    contains_reasoning,
+    parse_strict_json_candidates,
+)
 
 
 CONDITIONS = ("neutral", "fewshot", "instruction")
@@ -58,33 +62,6 @@ def _strip_fence(text: str) -> str:
         lines = stripped.splitlines()
         return "\n".join(line for line in lines if not line.strip().startswith("```")).strip()
     return stripped
-
-
-def _contains_reasoning(text: str) -> bool:
-    lowered = text.casefold()
-    markers = (
-        "<think>",
-        "</think>",
-        "<analysis>",
-        "</analysis>",
-        "<reasoning>",
-        "</reasoning>",
-        "analysis:",
-        "reasoning:",
-        "let me think",
-        "let's think",
-        "we need to reason",
-        "here's a thinking process",
-        "analyze user input",
-        "analyze the request",
-        "**task:**",
-        "**constraints:**",
-        "**incoming message:**",
-        "**incoming message content:**",
-        "**style instructions:**",
-        "return only a json list",
-    )
-    return any(marker in lowered for marker in markers)
 
 
 def _json_list_prefix(text: str) -> list[str] | None:
@@ -153,7 +130,7 @@ def _malformed_json_lines(text: str) -> list[str]:
 
 def _parse_candidates(text: str, n: int) -> list[str]:
     cleaned = _strip_fence(text)
-    if _contains_reasoning(cleaned):
+    if contains_reasoning(cleaned):
         return []
     try:
         parsed = json.loads(cleaned)
@@ -177,7 +154,7 @@ def _parse_candidates(text: str, n: int) -> list[str]:
         candidate = item.strip()
         if not candidate:
             continue
-        if _contains_reasoning(candidate):
+        if contains_reasoning(candidate):
             continue
         dedupe_key = re.sub(r"\s+", " ", candidate).casefold()
         if dedupe_key in seen:
@@ -191,28 +168,7 @@ def _parse_candidates(text: str, n: int) -> list[str]:
 
 def _parse_strict_json_output(text: str, n: int) -> tuple[list[str], str | None]:
     cleaned = _strip_fence(text)
-    if not cleaned:
-        return [], "empty_message_content"
-    if _contains_reasoning(cleaned):
-        return [], "reasoning_text_in_content"
-    try:
-        parsed = json.loads(cleaned)
-    except json.JSONDecodeError:
-        return [], "json_parse_failure"
-    if isinstance(parsed, dict) and set(parsed) == {"candidates"}:
-        parsed = parsed["candidates"]
-    if not isinstance(parsed, list):
-        return [], "invalid_json_shape"
-    if len(parsed) != n:
-        return [], "candidate_count_mismatch"
-    if any(not isinstance(item, str) or not item.strip() for item in parsed):
-        return [], "invalid_candidate_value"
-    candidates = [item.strip() for item in parsed]
-    if len({_candidate_key(item) for item in candidates}) != n:
-        return [], "duplicate_candidates"
-    if any(_contains_non_reply_content(item) for item in candidates):
-        return [], "non_reply_content"
-    return candidates, None
+    return parse_strict_json_candidates(cleaned, n)
 
 
 def strict_json_failure_reason(text: str, n: int) -> str | None:
@@ -222,44 +178,6 @@ def strict_json_failure_reason(text: str, n: int) -> str | None:
 
 def _parse_strict_json_candidates(text: str, n: int) -> list[str]:
     return _parse_strict_json_output(text, n)[0]
-
-
-def _candidate_key(candidate: str) -> str:
-    return re.sub(r"[\W_]+", "", candidate.casefold())
-
-
-def _contains_non_reply_content(text: str) -> bool:
-    lowered = text.casefold().strip()
-    markers = (
-        "as an ai",
-        "as a language model",
-        "i am an ai",
-        "i'm an ai",
-        "here's a thinking process",
-        "analyze user input",
-        "analyze the request",
-        "the user asks",
-        "we need to generate",
-        "we need to reply",
-        "let's craft",
-        "i should provide",
-        "i will generate",
-        "candidate reply",
-        "response options",
-        "incoming message:",
-        "incoming message content:",
-        "style instruction:",
-        "**task:**",
-        "**constraints:**",
-        "**analysis:**",
-    )
-    if any(marker in lowered for marker in markers):
-        return True
-    if lowered.startswith(("```", "{", "[")):
-        return True
-    if _contains_reasoning(lowered):
-        return True
-    return False
 
 
 def generate_candidates(

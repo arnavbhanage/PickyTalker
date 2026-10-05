@@ -3,7 +3,7 @@ import io
 import pandas as pd
 
 from src.generation.nim_client import FakeLLM
-from src.generation.run_eval import GenerationEvaluator
+from src.generation.run_eval import GenerationEvaluator, _safe_error
 
 
 def _items():
@@ -20,6 +20,14 @@ def _items():
 def _response(prefix):
     return "[" + ", ".join(f'"{prefix} reply {index}"' for index in range(5)) + "]"
 
+
+def test_failure_diagnostics_never_persist_exception_body():
+    class ProviderError(RuntimeError):
+        status_code = 503
+
+    error = ProviderError("sensitive provider body and synthetic user prompt")
+
+    assert _safe_error(error) == "upstream_http_503"
 
 def _runner(tmp_path, monkeypatch, responses):
     import src.generation.run_eval as run_eval

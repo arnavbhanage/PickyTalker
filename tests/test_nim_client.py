@@ -3,6 +3,8 @@ import logging
 import time
 from types import SimpleNamespace
 
+import pytest
+
 from src.generation.nim_client import NimClient
 
 
@@ -244,6 +246,67 @@ def test_exact_budget_truncated_response_is_not_reused(tmp_path, monkeypatch):
     assert second.cached is False
     assert second.text == '["one", "two"]'
     assert completions.calls == 2
+
+
+def test_strict_json_object_responses_are_cached_only_after_validation(
+    tmp_path,
+    monkeypatch,
+):
+    cache_path = tmp_path / "strict.jsonl"
+    messages = [
+        {"role": "system", "content": 'Return one JSON object with "candidates".'},
+        {"role": "user", "content": "Generate 2 distinct candidate replies."},
+    ]
+    valid, valid_calls = _client(
+        tmp_path,
+        monkeypatch,
+        [_completion(text='{"candidates":["first reply","second reply"]}')],
+        cache_path=cache_path,
+    )
+
+    first = valid.chat(
+        messages,
+        temperature=0,
+        max_tokens=20,
+        response_format={"type": "json_object"},
+    )
+    second = valid.chat(
+        messages,
+        temperature=0,
+        max_tokens=20,
+        response_format={"type": "json_object"},
+    )
+
+    assert first.cached is False
+    assert second.cached is True
+    assert valid_calls.calls == 1
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '{"candidates":["one"]}',
+        '{"candidates":["one","<think>private reasoning</think>"]}',
+        '{"candidates":["same","SAME"]}',
+    ],
+)
+def test_rejected_strict_response_is_not_written_to_cache(
+    tmp_path,
+    monkeypatch,
+    text,
+):
+    cache_path = tmp_path / "strict-rejected.jsonl"
+    nim, _ = _client(tmp_path, monkeypatch, [_completion(text=text)], cache_path=cache_path)
+    messages = [{"role": "user", "content": "Generate 2 distinct candidate replies."}]
+
+    nim.chat(
+        messages,
+        temperature=0,
+        max_tokens=20,
+        response_format={"type": "json_object"},
+    )
+
+    assert not cache_path.exists()
 
 
 def test_api_key_never_appears_in_logs_or_cache(tmp_path, monkeypatch, caplog):

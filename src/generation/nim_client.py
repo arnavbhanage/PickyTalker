@@ -13,6 +13,8 @@ from typing import Protocol, Sequence
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from src.generation.strict_json import parse_strict_json_candidates
+
 
 @dataclass(frozen=True)
 class LLMResponse:
@@ -205,25 +207,8 @@ class NimClient:
         expected = cls._expected_candidate_count(request)
         if expected is None:
             return None
-        try:
-            parsed = json.loads(text.strip())
-        except json.JSONDecodeError:
-            return None
-        if (
-            not isinstance(parsed, list)
-            or len(parsed) != expected
-            or any(not isinstance(item, str) or not item.strip() for item in parsed)
-        ):
-            return None
-        normalized = [item.strip().casefold() for item in parsed]
-        if len(set(normalized)) != expected:
-            return None
-        if any(
-            marker in text.casefold()
-            for marker in ("<think>", "</think>", "<analysis>", "</analysis>", "analysis:")
-        ):
-            return None
-        return expected
+        candidates, failure_reason = parse_strict_json_candidates(text, expected)
+        return expected if failure_reason is None and len(candidates) == expected else None
 
     def _compatible_cache_lookup(
         self,
@@ -383,7 +368,15 @@ class NimClient:
                 cached=False,
                 finish_reason=finish_reason,
             )
-            if self.cache_enabled:
+            cacheable = (
+                response.finish_reason != "length"
+                and (
+                    self._expected_candidate_count(request) is None
+                    or self._complete_candidate_count(request, response.text)
+                    == self._expected_candidate_count(request)
+                )
+            )
+            if self.cache_enabled and cacheable:
                 self._cache_append(request_key, request, response)
             return response
         raise RuntimeError("NIM request exited its retry loop unexpectedly.")
