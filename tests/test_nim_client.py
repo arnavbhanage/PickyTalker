@@ -194,3 +194,21 @@ def test_api_key_never_appears_in_logs_or_cache(tmp_path, monkeypatch, caplog):
     cache = (tmp_path / "cache.jsonl").read_text(encoding="utf-8")
     assert secret not in caplog.text
     assert secret not in cache
+
+
+def test_cache_can_be_disabled_for_stateless_api_requests(tmp_path, monkeypatch):
+    cache_path = tmp_path / "private" / "cache.jsonl"
+    nim, completions = _client(
+        tmp_path,
+        monkeypatch,
+        [_completion()],
+        cache_path=cache_path,
+        cache_enabled=False,
+    )
+
+    first = nim.chat([{"role": "user", "content": "private history"}], 0, 10)
+    second = nim.chat([{"role": "user", "content": "private history"}], 0, 10)
+
+    assert completions.calls == 2
+    assert first.cached is False and second.cached is False
+    assert not cache_path.exists()

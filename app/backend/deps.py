@@ -24,7 +24,7 @@ def get_inference_engine(request: Request) -> InferenceEngine:
 def get_llm_client() -> NimClient | None:
     if not os.getenv("NVIDIA_API_KEY") or not os.getenv("NIM_MODEL"):
         return None
-    return NimClient()
+    return NimClient(cache_enabled=False)
 
 
 def require_api_key(x_api_key: str | None = Header(default=None)) -> None:

@@ -147,7 +147,7 @@ def test_history_is_capped_to_latest_one_hundred_messages(api, monkeypatch):
     client, _ = api
     seen = {}
 
-    def fake_profile(history, prior_strength):
+    def fake_profile_from_history(history, prior_strength):
         seen["history"] = history
         return {
             "profile": {"message_count": len(history)},
@@ -158,7 +158,7 @@ def test_history_is_capped_to_latest_one_hundred_messages(api, monkeypatch):
 
     from app.backend import service as backend_service
 
-    monkeypatch.setattr(backend_service, "profile", fake_profile)
+    monkeypatch.setattr(backend_service, "profile_from_history", fake_profile_from_history)
     response = client.post("/profile", json={"history": [f"message {i}" for i in range(150)]})
     assert response.status_code == 200
     assert seen["history"][0] == "message 50"

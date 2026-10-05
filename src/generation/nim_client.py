@@ -76,6 +76,7 @@ class NimClient:
         max_retries: int = 3,
         backoff_seconds: float = 1.0,
         timeout_s: float = 120.0,
+        cache_enabled: bool = True,
         openai_client=None,
     ):
         repo_root = Path(__file__).resolve().parents[2]
@@ -101,8 +102,10 @@ class NimClient:
         self.max_retries = max_retries
         self.backoff_seconds = backoff_seconds
         self.timeout_s = timeout_s
+        self.cache_enabled = cache_enabled
         self.cache_path = Path(cache_path) if cache_path else repo_root / "data" / "cache" / "nim_responses.jsonl"
-        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+        if self.cache_enabled:
+            self.cache_path.parent.mkdir(parents=True, exist_ok=True)
         self._client = openai_client or OpenAI(
             base_url=self.BASE_URL,
             api_key=api_key,
@@ -296,14 +299,15 @@ class NimClient:
             "max_tokens": max_tokens,
         }
         request_key = self._request_key(self.model, messages, temperature, max_tokens)
-        cached_response = self._cache_lookup(request_key)
-        if cached_response is not None:
-            return cached_response
-        cached_response = self._compatible_cache_lookup(
-            self.model, request["messages"], temperature, max_tokens
-        )
-        if cached_response is not None:
-            return cached_response
+        if self.cache_enabled:
+            cached_response = self._cache_lookup(request_key)
+            if cached_response is not None:
+                return cached_response
+            cached_response = self._compatible_cache_lookup(
+                self.model, request["messages"], temperature, max_tokens
+            )
+            if cached_response is not None:
+                return cached_response
 
         for attempt in range(self.max_retries + 1):
             self._acquire_rate_slot()
@@ -341,6 +345,7 @@ class NimClient:
                 cached=False,
                 finish_reason=finish_reason,
             )
-            self._cache_append(request_key, request, response)
+            if self.cache_enabled:
+                self._cache_append(request_key, request, response)
             return response
         raise RuntimeError("NIM request exited its retry loop unexpectedly.")
