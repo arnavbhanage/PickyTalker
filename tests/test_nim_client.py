@@ -201,7 +201,7 @@ def test_cache_can_be_disabled_for_stateless_api_requests(tmp_path, monkeypatch)
     nim, completions = _client(
         tmp_path,
         monkeypatch,
-        [_completion()],
+        [_completion(), _completion()],
         cache_path=cache_path,
         cache_enabled=False,
     )

@@ -42,8 +42,8 @@ def _engine():
 @pytest.fixture
 def api(monkeypatch, tmp_path):
     monkeypatch.delenv("PICKYTALKER_API_KEY", raising=False)
-    monkeypatch.delenv("NVIDIA_API_KEY", raising=False)
-    monkeypatch.delenv("NIM_MODEL", raising=False)
+    monkeypatch.setenv("NVIDIA_API_KEY", "")
+    monkeypatch.setenv("NIM_MODEL", "")
     application = create_app(tmp_path)
     application.dependency_overrides[deps.get_inference_engine] = _engine
     client = TestClient(application)

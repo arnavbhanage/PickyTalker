@@ -11,6 +11,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
 
 from app.backend import deps, service
 from app.backend.schemas import (
@@ -39,6 +40,7 @@ def create_app(model_dir: str | Path | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        load_dotenv(ROOT / ".env")
         try:
             app.state.inference_engine = InferenceEngine.load(artifact_dir)
             app.state.artifact_error = None
@@ -105,7 +107,7 @@ def create_app(model_dir: str | Path | None = None) -> FastAPI:
             "artifact_version": engine.artifact_meta.get("artifact_version") if engine else None,
             "artifacts_loaded": engine is not None,
             "llm_configured": bool(os.getenv("NVIDIA_API_KEY") and os.getenv("NIM_MODEL")),
-            "model_name": os.getenv("NIM_MODEL"),
+            "model_name": os.getenv("NIM_MODEL") or None,
         }
 
     @app.post(
