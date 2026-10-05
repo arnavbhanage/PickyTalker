@@ -10,7 +10,6 @@ from src.benchmark.evaluate import (
     DEFAULT_FEATURES,
     StyleSpace,
     evaluate,
-    learning_curve,
     summarize,
 )
 from src.inference import InferenceEngine
@@ -59,7 +58,13 @@ def _feature_correlations(space, benchmark: pd.DataFrame) -> pd.DataFrame:
         k=PRIOR_STRENGTH,
         seed=SEED,
     )
-    correlations = np.corrcoef(matrix, rowvar=False)
+    standard_deviations = np.std(matrix, axis=0)
+    correlations = np.full((matrix.shape[1], matrix.shape[1]), np.nan)
+    variable = np.flatnonzero(standard_deviations > 0)
+    if len(variable):
+        correlations[np.ix_(variable, variable)] = np.corrcoef(
+            matrix[:, variable], rowvar=False
+        )
     pairs = []
     for left in range(len(names)):
         for right in range(left + 1, len(names)):
@@ -115,6 +120,56 @@ def _history_bins(df: pd.DataFrame, results: pd.DataFrame) -> pd.DataFrame:
             "min_history_messages": int(group["available_history"].min()),
             "median_history_messages": float(group["available_history"].median()),
             "max_history_messages": int(group["available_history"].max()),
+            "recall_at_1": float(values.mean()),
+            "ci_low": float(np.percentile(bootstrap, 2.5)),
+            "ci_high": float(np.percentile(bootstrap, 97.5)),
+        })
+    return pd.DataFrame(rows)
+
+
+def _user_history_learning_curve(space, benchmark: pd.DataFrame) -> pd.DataFrame:
+    observations = []
+    for m in (0, 1, 3, 10, 30, 100, None):
+        history_msgs = "all" if m is None else m
+        for seed in (0, 1, 2):
+            result = evaluate(
+                space,
+                benchmark,
+                scorers=("user_style",),
+                m=m,
+                k=PRIOR_STRENGTH,
+                seed=seed,
+            )
+            per_user = (
+                result.groupby(["tier", "user_id"])["hit"]
+                .mean()
+                .reset_index()
+            )
+            for row in per_user.itertuples(index=False):
+                observations.append({
+                    "history_msgs": history_msgs,
+                    "tier": row.tier,
+                    "user_id": row.user_id,
+                    "seed": seed,
+                    "hit": row.hit,
+                })
+    per_user_seed = pd.DataFrame(observations).groupby(
+        ["history_msgs", "tier", "user_id"], sort=False
+    )["hit"].mean().reset_index()
+    rows = []
+    for (history_msgs, tier), group in per_user_seed.groupby(
+        ["history_msgs", "tier"], sort=False
+    ):
+        values = group["hit"].to_numpy(dtype=float)
+        rng = np.random.default_rng(SEED)
+        bootstrap = np.asarray([
+            values[rng.integers(0, len(values), len(values))].mean()
+            for _ in range(1000)
+        ])
+        rows.append({
+            "history_msgs": history_msgs,
+            "tier": tier,
+            "users": len(values),
             "recall_at_1": float(values.mean()),
             "ci_low": float(np.percentile(bootstrap, 2.5)),
             "ci_high": float(np.percentile(bootstrap, 97.5)),
@@ -271,18 +326,11 @@ def main() -> int:
 
     importance = _feature_importance(engine)
     _save(importance, "06_ranker_feature_importance.csv")
-    _save(_feature_correlations(space, benchmark), "06_ranker_feature_correlations.csv")
+    correlations = _feature_correlations(space, benchmark)
+    _save(correlations, "06_ranker_feature_correlations.csv")
     _save(_history_bins(df, results), "06_ranker_history_bins.csv")
-    _save(
-        learning_curve(
-            space,
-            benchmark,
-            ms=(0, 1, 3, 10, 30, 100, None),
-            seeds=(0, 1, 2),
-            k=PRIOR_STRENGTH,
-        ).reset_index(),
-        "06_ranker_history_learning_curve.csv",
-    )
+    history_curve = _user_history_learning_curve(space, benchmark)
+    _save(history_curve, "06_user_style_history_learning_curve.csv")
     training_size, ablation = _training_experiments(df, space, benchmark)
     _save(training_size, "06_ranker_training_size.csv")
     _save(ablation, "06_ranker_ablation.csv")
@@ -294,7 +342,9 @@ def main() -> int:
     print(hardest.to_string(index=False))
     print("\nTop ranker features by gain:")
     print(importance.head(10).to_string(index=False))
-    print(f"\nFeature pairs with |Pearson r| >= 0.98: {len(pd.read_csv(FINDINGS_DIR / '06_ranker_feature_correlations.csv'))}")
+    print(f"\nFeature pairs with |Pearson r| >= 0.98: {len(correlations)}")
+    print("\nUser-weighted user-style history curve:")
+    print(history_curve.to_string(index=False))
     print("\nTraining-size comparisons on validation users:")
     print(training_size.to_string(index=False))
     print("\nPer-feature LLR ablation (total LLR retained):")

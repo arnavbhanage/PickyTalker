@@ -14,7 +14,11 @@ from dotenv import load_dotenv
 from src.benchmark.evaluate import DEFAULT_FEATURES, StyleSpace
 from src.features.extractor import extract_message
 from src.generation.eval_items import select_eval_items
-from src.generation.generate import CONDITIONS, generate_candidates
+from src.generation.generate import (
+    CONDITIONS,
+    generate_candidates,
+    strict_json_failure_reason,
+)
 from src.generation.metrics import evaluate_candidates
 from src.generation.nim_client import NimClient
 from src.ranking.features import candidate_features
@@ -106,6 +110,8 @@ class GenerationEvaluator:
         if calls.empty or "item_id" not in calls.columns:
             return False
         existing = calls[calls["item_id"].astype(str).eq(str(item_id))]
+        if "parse_failure_reason" not in existing.columns:
+            return False
         if set(existing["condition"]) != set(CONDITIONS) or len(existing) != len(CONDITIONS):
             return False
         return bool(
@@ -161,6 +167,7 @@ class GenerationEvaluator:
             for condition in CONDITIONS:
                 request_started = time.perf_counter()
                 failure_type = None
+                parse_failure_reason = None
                 try:
                     generated, response = generate_candidates(
                         self.client,
@@ -171,7 +178,13 @@ class GenerationEvaluator:
                         temperature=self.temperature,
                         max_tokens=self.max_tokens,
                         return_response=True,
+                        strict_json=True,
                     )
+                    if len(generated) != self.n_candidates:
+                        parse_failure_reason = strict_json_failure_reason(
+                            response.text,
+                            self.n_candidates,
+                        )
                     error_message = None
                     failed = False
                     status_code = None
@@ -207,6 +220,7 @@ class GenerationEvaluator:
                     "failure_status_code": status_code,
                     "failure_message": error_message,
                     "parse_failure": not failed and len(generated) < self.n_candidates,
+                    "parse_failure_reason": parse_failure_reason,
                     "returned_candidates": len(generated),
                 })
                 attempted_calls += 1

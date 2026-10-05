@@ -52,6 +52,10 @@ def test_run_saves_item_results_and_resume_skips_completed_item(tmp_path, monkey
     assert len(calls) == 3
     assert len(candidates) == 15
     assert len(client.calls) == 3
+    assert all(
+        call["response_format"] == {"type": "json_object"}
+        for call in client.calls
+    )
     assert (tmp_path / "06_pilot_call_stats_raw.csv").exists()
     assert (tmp_path / "06_pilot_candidate_metrics.csv").exists()
     assert "item 1 of 1, calls so far 3" in progress.getvalue()
@@ -98,3 +102,39 @@ def test_failed_item_is_retried_and_old_partial_rows_are_replaced(tmp_path, monk
     assert len(retried_calls) == 3
     assert not retried_calls["failed"].astype(bool).any()
     assert len(retried_candidates) == 15
+
+
+def test_parse_failure_is_classified_without_saving_raw_response(
+    tmp_path,
+    monkeypatch,
+):
+    runner, client = _runner(tmp_path, monkeypatch, ["not JSON"] * 3)
+
+    calls, candidates = runner.run(
+        _items(),
+        output_prefix="06_parse_failure",
+        checkpoint_every=1,
+    )
+
+    assert len(candidates) == 0
+    assert len(client.calls) == 3
+    assert calls["parse_failure"].astype(bool).all()
+    assert set(calls["parse_failure_reason"]) == {"json_parse_failure"}
+    assert "not JSON" not in (tmp_path / "06_parse_failure_call_stats_raw.csv").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_old_complete_rows_are_rechecked_for_new_parse_diagnostics(tmp_path, monkeypatch):
+    runner, _ = _runner(tmp_path, monkeypatch, [])
+    old_calls = pd.DataFrame([
+        {
+            "item_id": "heldout-1",
+            "condition": condition,
+            "failed": False,
+            "returned_candidates": 5,
+        }
+        for condition in ("neutral", "fewshot", "instruction")
+    ])
+
+    assert not runner._item_complete(old_calls, "heldout-1")

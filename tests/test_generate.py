@@ -1,6 +1,10 @@
 import pytest
 
-from src.generation.generate import _parse_strict_json_candidates, generate_candidates
+from src.generation.generate import (
+    _parse_strict_json_candidates,
+    generate_candidates,
+    strict_json_failure_reason,
+)
 from src.generation.nim_client import FakeLLM
 
 
@@ -88,6 +92,45 @@ def test_strict_json_rejects_analysis_and_requires_distinct_complete_candidates(
     ) == ["reply one", "reply two"]
     assert _parse_strict_json_candidates('["Sure!","sure"]', 2) == []
     assert _parse_strict_json_candidates('["As an AI, I would say yes.","No."]', 2) == []
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (" ", "empty_message_content"),
+        ('["one",]', "json_parse_failure"),
+        ('{"other":["one","two"]}', "invalid_json_shape"),
+        ('{"candidates":["one"]}', "candidate_count_mismatch"),
+        ('{"candidates":["one","one"]}', "duplicate_candidates"),
+        (
+            '{"candidates":["<think>analysis</think>","reply"]}',
+            "reasoning_text_in_content",
+        ),
+    ],
+)
+def test_strict_json_failure_reason_is_specific_and_does_not_return_content(
+    text,
+    expected,
+):
+    assert strict_json_failure_reason(text, 2) == expected
+
+
+def test_strict_json_prompt_matches_structured_response_format():
+    fake = FakeLLM(['{"candidates":["reply one","reply two"]}'])
+    generate_candidates(
+        fake,
+        "hello",
+        [],
+        "neutral",
+        2,
+        0.2,
+        strict_json=True,
+    )
+
+    prompt = fake.calls[0]["messages"][0]["content"]
+    assert "JSON object" in prompt
+    assert "JSON list" not in prompt
+    assert fake.calls[0]["response_format"] == {"type": "json_object"}
 
 
 def test_api_generation_requests_json_object_mode():

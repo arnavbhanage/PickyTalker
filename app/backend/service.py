@@ -61,7 +61,7 @@ def _generate(client, history, incoming: str, n: int, condition: str) -> tuple[l
                 condition=condition,
                 n=n,
                 temperature=0.2,
-                max_tokens=1200,
+                max_tokens=2500,
                 return_response=True,
                 strict_json=True,
             )

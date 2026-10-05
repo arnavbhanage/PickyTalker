@@ -15,9 +15,18 @@ class APITimeoutError(Exception):
     pass
 
 
-def _completion(text="generated reply", prompt_tokens=11, completion_tokens=4, finish_reason="stop"):
+def _completion(
+    text="generated reply",
+    prompt_tokens=11,
+    completion_tokens=4,
+    finish_reason="stop",
+    reasoning=None,
+):
+    message = SimpleNamespace(content=text)
+    if reasoning is not None:
+        message.reasoning = reasoning
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=text), finish_reason=finish_reason)],
+        choices=[SimpleNamespace(message=message, finish_reason=finish_reason)],
         usage=SimpleNamespace(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens),
     )
 
@@ -62,6 +71,27 @@ def test_cache_hit_avoids_a_second_api_call(tmp_path, monkeypatch):
     assert second.cached is True
     assert second.text == "generated reply"
     assert second.finish_reason == "stop"
+
+
+def test_only_message_content_is_saved_not_separate_reasoning(tmp_path, monkeypatch):
+    content = '{"candidates":["hello","hi"]}'
+    nim, _ = _client(
+        tmp_path,
+        monkeypatch,
+        [_completion(text=content, reasoning="<think>private analysis</think>")],
+    )
+
+    response = nim.chat(
+        [{"role": "user", "content": "generate JSON"}],
+        temperature=0,
+        max_tokens=20,
+        response_format={"type": "json_object"},
+    )
+    cached = json.loads((tmp_path / "cache.jsonl").read_text(encoding="utf-8"))
+
+    assert response.text == content
+    assert cached["response"]["text"] == content
+    assert "private analysis" not in cached["response"]["text"]
 
 
 def test_retries_429_then_succeeds(tmp_path, monkeypatch):
