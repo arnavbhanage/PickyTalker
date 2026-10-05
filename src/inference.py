@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
@@ -124,27 +125,33 @@ class InferenceEngine:
         all_raw_features = history_features + candidate_features_raw
         standardized = self.population_stats.standardize(all_raw_features)
         profile_user = "request-user"
+        if profile_seed is None:
+            history_digest = hashlib.sha256(
+                "\0".join(str(text) for text in history).encode("utf-8")
+            ).digest()
+            profile_seed = int.from_bytes(history_digest[:8], "big", signed=False)
+        history_indices = np.arange(len(history), dtype=int)
+        if len(history_indices) > 10:
+            history_indices = np.random.default_rng(profile_seed).choice(
+                history_indices,
+                size=10,
+                replace=False,
+            )
         space = SimpleNamespace(
             features=list(self.population_stats.feature_names),
             d=len(self.population_stats.feature_names),
             Z=standardized,
             row={message_id: index for index, message_id in enumerate(row_ids)},
             hist_idx={
-                profile_user: np.arange(len(history), dtype=int),
+                profile_user: history_indices,
             },
-        )
-        rng = (
-            np.random.default_rng(profile_seed)
-            if profile_seed is not None
-            else None
         )
         matrix, feature_names = candidate_features(
             space,
             profile_user,
             candidate_ids,
-            m=10,
+            m=None,
             k=self.prior_strength,
-            rng=rng,
         )
         expected_names = tuple(self.artifact_meta["ranker_feature_names"])
         positions = {name: index for index, name in enumerate(feature_names)}

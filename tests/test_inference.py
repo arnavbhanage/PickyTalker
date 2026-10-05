@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from src.backend_service import profile_from_history, rank_candidates
 from src.features.extractor import extract_message
-from src.inference import InferenceEngine, PopulationStats
+from src.inference import ArtifactUnavailableError, InferenceEngine, PopulationStats
 
 
 class _LinearRanker:
@@ -65,3 +66,8 @@ def test_profile_response_uses_existing_interpretable_profile_and_shrinkage():
     assert result["confidence"] == 2 / 12
     assert result["profile"]["message_count"] == 2
     assert result["instruction"]
+
+
+def test_missing_artifacts_name_the_build_command(tmp_path):
+    with pytest.raises(ArtifactUnavailableError, match="python -m scripts.build_artifacts"):
+        InferenceEngine.load(tmp_path)

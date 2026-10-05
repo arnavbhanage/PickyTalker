@@ -8,6 +8,7 @@ import pytest
 
 from src.benchmark.evaluate import DEFAULT_FEATURES, StyleSpace
 from src.inference import InferenceEngine, PopulationStats
+from src.ranking.features import _stable_user_seed
 from src.ranking.lgbm_ranker import build_training_matrix, train_ranker
 
 
@@ -67,10 +68,7 @@ def test_inference_matches_training_features_and_scores_on_real_rows():
     )
     user = target.iloc[0]["user_id"]
     history_indices = space.hist_idx[user]
-    selected_indices = np.random.default_rng(21).choice(
-        history_indices, size=10, replace=False
-    )
-    history_texts = df.iloc[selected_indices]["message"].astype(str).tolist()
+    history_texts = df.iloc[history_indices]["message"].astype(str).tolist()
     ids = [target.iloc[0]["item_id"], *target.iloc[0]["neg_ids"].split(";")]
     candidate_texts = [
         df.iloc[space.row[mid]]["message"]
@@ -78,7 +76,7 @@ def test_inference_matches_training_features_and_scores_on_real_rows():
     ]
     history_population = df.loc[df["time_split"].eq("history"), DEFAULT_FEATURES]
     means = history_population.mean(axis=0).to_numpy()
-    deviations = history_population.std(axis=0, ddof=0).to_numpy()
+    deviations = history_population.std(axis=0, ddof=0).to_numpy(copy=True)
     deviations[deviations < 1e-9] = 1.0
     stats = PopulationStats(
         feature_names=tuple(DEFAULT_FEATURES),
@@ -91,7 +89,11 @@ def test_inference_matches_training_features_and_scores_on_real_rows():
         stats,
         {"ranker_feature_names": list(model.feature_names_)},
     )
-    served = engine.score_candidates(history_texts, candidate_texts)
+    served = engine.score_candidates(
+        history_texts,
+        candidate_texts,
+        profile_seed=_stable_user_seed(user),
+    )
 
     assert feature_names == list(engine.artifact_meta["ranker_feature_names"])
     np.testing.assert_allclose(served.feature_matrix, training_features, rtol=0, atol=1e-6)
