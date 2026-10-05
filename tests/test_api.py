@@ -118,7 +118,8 @@ def test_generate_and_respond_return_candidates_and_llm_metadata(api):
     assert response.json()["best"]["rank"] == 1
     assert len(response.json()["candidates"]) == 2
     assert response.json()["meta"]["llm_calls"] == 1
-    assert fake.calls[1]["max_tokens"] == 2500
+    assert fake.calls[1]["max_tokens"] == 1200
+    assert fake.calls[1]["response_format"] == {"type": "json_object"}
 
 
 @pytest.mark.parametrize(
