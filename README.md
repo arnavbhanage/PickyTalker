@@ -408,6 +408,17 @@ Current focus:
 
 ---
 
+## Backend API
+
+The stateless FastAPI backend exposes `/health`, `/profile`, `/rank`, `/generate`,
+and `/respond`. Build its local model artifacts with `python -m scripts.build_artifacts`,
+then start it using `python -m uvicorn app.backend.main:app --reload`. See
+[`docs/api.md`](docs/api.md) for setup, PowerShell request examples, response formats,
+limits, and privacy notes. Do not send personal data to NVIDIA without informed
+consent.
+
+---
+
 ## Goal
 
 PickyTalker aims to explore whether measurable communication preferences can improve the selection of AI-generated responses for individual users.

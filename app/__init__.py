@@ -1,0 +1,1 @@
+"""PickyTalker application package."""
