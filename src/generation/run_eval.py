@@ -14,7 +14,11 @@ from dotenv import load_dotenv
 from src.benchmark.evaluate import DEFAULT_FEATURES, StyleSpace
 from src.features.extractor import extract_message
 from src.generation.eval_items import select_eval_items
-from src.generation.generate import CONDITIONS, generate_candidates
+from src.generation.generate import (
+    CONDITIONS,
+    generate_candidates,
+    strict_json_failure_reason,
+)
 from src.generation.metrics import evaluate_candidates
 from src.generation.nim_client import NimClient
 from src.ranking.features import candidate_features
@@ -45,11 +49,15 @@ def _read_frame(path: Path) -> pd.DataFrame:
     return pd.read_csv(path) if path.exists() else pd.DataFrame()
 
 
-def _safe_error(exc: Exception, api_key: str | None) -> str:
-    message = str(exc)
-    if api_key:
-        message = message.replace(api_key, "[REDACTED]")
-    return message[:2000]
+def _safe_error(exc: Exception) -> str:
+    status_code = getattr(exc, "status_code", None)
+    if type(exc).__name__ in {"APITimeoutError", "ConnectTimeout", "ReadTimeout", "Timeout"}:
+        return "upstream_timeout"
+    if status_code == 429:
+        return "upstream_rate_limited"
+    if isinstance(status_code, int):
+        return f"upstream_http_{status_code}"
+    return "upstream_request_failed"
 
 
 class GenerationEvaluator:
@@ -106,6 +114,8 @@ class GenerationEvaluator:
         if calls.empty or "item_id" not in calls.columns:
             return False
         existing = calls[calls["item_id"].astype(str).eq(str(item_id))]
+        if "parse_failure_reason" not in existing.columns:
+            return False
         if set(existing["condition"]) != set(CONDITIONS) or len(existing) != len(CONDITIONS):
             return False
         return bool(
@@ -161,6 +171,7 @@ class GenerationEvaluator:
             for condition in CONDITIONS:
                 request_started = time.perf_counter()
                 failure_type = None
+                parse_failure_reason = None
                 try:
                     generated, response = generate_candidates(
                         self.client,
@@ -171,7 +182,13 @@ class GenerationEvaluator:
                         temperature=self.temperature,
                         max_tokens=self.max_tokens,
                         return_response=True,
+                        strict_json=True,
                     )
+                    if len(generated) != self.n_candidates:
+                        parse_failure_reason = strict_json_failure_reason(
+                            response.text,
+                            self.n_candidates,
+                        )
                     error_message = None
                     failed = False
                     status_code = None
@@ -184,7 +201,7 @@ class GenerationEvaluator:
                     generated = []
                     failed = True
                     failure_type = type(exc).__name__
-                    error_message = _safe_error(exc, getattr(self.client, "_api_key", None))
+                    error_message = _safe_error(exc)
                     status_code = getattr(exc, "status_code", None)
                     latency = time.perf_counter() - request_started
                     prompt_tokens = None
@@ -207,6 +224,7 @@ class GenerationEvaluator:
                     "failure_status_code": status_code,
                     "failure_message": error_message,
                     "parse_failure": not failed and len(generated) < self.n_candidates,
+                    "parse_failure_reason": parse_failure_reason,
                     "returned_candidates": len(generated),
                 })
                 attempted_calls += 1

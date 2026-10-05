@@ -81,6 +81,7 @@ def test_health_profile_and_rank_do_not_need_llm(api):
     assert [row["rank"] for row in rows] == [1, 2]
     for row in rows:
         assert row["style_score"] == pytest.approx(sum(row["contributions"].values()))
+        assert "total" not in row["contributions"]
 
 
 def test_generate_and_respond_return_candidates_and_llm_metadata(api):
@@ -118,6 +119,7 @@ def test_generate_and_respond_return_candidates_and_llm_metadata(api):
     assert len(response.json()["candidates"]) == 2
     assert response.json()["meta"]["llm_calls"] == 1
     assert fake.calls[1]["max_tokens"] == 2500
+    assert fake.calls[1]["response_format"] == {"type": "json_object"}
 
 
 @pytest.mark.parametrize(

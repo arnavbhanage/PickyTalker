@@ -161,7 +161,10 @@ class InferenceEngine:
         ordered = matrix[:, [positions[name] for name in expected_names]]
         scores = np.asarray(self.ranker.predict(ordered), dtype=float)
 
-        style_names = [name for name in feature_names if name.startswith("llr_")]
+        style_names = [
+            name for name in feature_names
+            if name.startswith("llr_") and name != "llr_total"
+        ]
         style_contributions = tuple(
             {
                 name.removeprefix("llr_"): float(matrix[row, feature_names.index(name)])

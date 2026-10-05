@@ -3,6 +3,8 @@ import logging
 import time
 from types import SimpleNamespace
 
+import pytest
+
 from src.generation.nim_client import NimClient
 
 
@@ -11,9 +13,22 @@ class _TransientError(Exception):
         self.status_code = status_code
 
 
-def _completion(text="generated reply", prompt_tokens=11, completion_tokens=4, finish_reason="stop"):
+class APITimeoutError(Exception):
+    pass
+
+
+def _completion(
+    text="generated reply",
+    prompt_tokens=11,
+    completion_tokens=4,
+    finish_reason="stop",
+    reasoning=None,
+):
+    message = SimpleNamespace(content=text)
+    if reasoning is not None:
+        message.reasoning = reasoning
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=text), finish_reason=finish_reason)],
+        choices=[SimpleNamespace(message=message, finish_reason=finish_reason)],
         usage=SimpleNamespace(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens),
     )
 
@@ -60,6 +75,27 @@ def test_cache_hit_avoids_a_second_api_call(tmp_path, monkeypatch):
     assert second.finish_reason == "stop"
 
 
+def test_only_message_content_is_saved_not_separate_reasoning(tmp_path, monkeypatch):
+    content = '{"candidates":["hello","hi"]}'
+    nim, _ = _client(
+        tmp_path,
+        monkeypatch,
+        [_completion(text=content, reasoning="<think>private analysis</think>")],
+    )
+
+    response = nim.chat(
+        [{"role": "user", "content": "generate JSON"}],
+        temperature=0,
+        max_tokens=20,
+        response_format={"type": "json_object"},
+    )
+    cached = json.loads((tmp_path / "cache.jsonl").read_text(encoding="utf-8"))
+
+    assert response.text == content
+    assert cached["response"]["text"] == content
+    assert "private analysis" not in cached["response"]["text"]
+
+
 def test_retries_429_then_succeeds(tmp_path, monkeypatch):
     nim, completions = _client(
         tmp_path,
@@ -86,6 +122,34 @@ def test_retries_5xx_then_succeeds(tmp_path, monkeypatch):
 
     assert completions.calls == 2
     assert response.text == "generated reply"
+
+
+def test_retries_one_timeout_then_succeeds(tmp_path, monkeypatch):
+    nim, completions = _client(
+        tmp_path,
+        monkeypatch,
+        [APITimeoutError("timeout"), _completion()],
+        max_retries=2,
+    )
+    response = nim.chat([{"role": "user", "content": "hello"}], 0, 10)
+    assert response.text == "generated reply"
+    assert completions.calls == 2
+
+
+def test_does_not_retry_retired_model_410(tmp_path, monkeypatch):
+    nim, completions = _client(
+        tmp_path,
+        monkeypatch,
+        [_TransientError(410), _completion()],
+        max_retries=3,
+    )
+    try:
+        nim.chat([{"role": "user", "content": "hello"}], 0, 10)
+    except _TransientError as exc:
+        assert exc.status_code == 410
+    else:
+        raise AssertionError("A retired-model response should be raised.")
+    assert completions.calls == 1
 
 
 def test_rate_cap_spaces_requests(tmp_path, monkeypatch):
@@ -182,6 +246,67 @@ def test_exact_budget_truncated_response_is_not_reused(tmp_path, monkeypatch):
     assert second.cached is False
     assert second.text == '["one", "two"]'
     assert completions.calls == 2
+
+
+def test_strict_json_object_responses_are_cached_only_after_validation(
+    tmp_path,
+    monkeypatch,
+):
+    cache_path = tmp_path / "strict.jsonl"
+    messages = [
+        {"role": "system", "content": 'Return one JSON object with "candidates".'},
+        {"role": "user", "content": "Generate 2 distinct candidate replies."},
+    ]
+    valid, valid_calls = _client(
+        tmp_path,
+        monkeypatch,
+        [_completion(text='{"candidates":["first reply","second reply"]}')],
+        cache_path=cache_path,
+    )
+
+    first = valid.chat(
+        messages,
+        temperature=0,
+        max_tokens=20,
+        response_format={"type": "json_object"},
+    )
+    second = valid.chat(
+        messages,
+        temperature=0,
+        max_tokens=20,
+        response_format={"type": "json_object"},
+    )
+
+    assert first.cached is False
+    assert second.cached is True
+    assert valid_calls.calls == 1
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '{"candidates":["one"]}',
+        '{"candidates":["one","<think>private reasoning</think>"]}',
+        '{"candidates":["same","SAME"]}',
+    ],
+)
+def test_rejected_strict_response_is_not_written_to_cache(
+    tmp_path,
+    monkeypatch,
+    text,
+):
+    cache_path = tmp_path / "strict-rejected.jsonl"
+    nim, _ = _client(tmp_path, monkeypatch, [_completion(text=text)], cache_path=cache_path)
+    messages = [{"role": "user", "content": "Generate 2 distinct candidate replies."}]
+
+    nim.chat(
+        messages,
+        temperature=0,
+        max_tokens=20,
+        response_format={"type": "json_object"},
+    )
+
+    assert not cache_path.exists()
 
 
 def test_api_key_never_appears_in_logs_or_cache(tmp_path, monkeypatch, caplog):
