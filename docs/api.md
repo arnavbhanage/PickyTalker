@@ -139,6 +139,7 @@ fields as `/generate`.
   response bodies and keys are not returned.
 - `503`: required model artifacts are missing, or the LLM is not configured.
   Build model artifacts with `python -m scripts.build_artifacts`.
+- `500`: an unexpected internal error; the response does not include a traceback.
 
 ## Privacy
 

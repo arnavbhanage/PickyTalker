@@ -81,15 +81,21 @@ def _generate(client, history, incoming: str, n: int, condition: str) -> tuple[l
     latency = sum(response.latency_s for response in responses)
     if latency <= 0:
         latency = time.perf_counter() - started
+    prompt_token_counts = [response.prompt_tokens for response in responses]
+    completion_token_counts = [response.completion_tokens for response in responses]
     metadata = {
         "latency_ms": latency * 1000.0,
         "llm_calls": sum(not response.cached for response in responses),
         "cached_calls": sum(response.cached for response in responses),
-        "prompt_tokens": sum(
-            response.prompt_tokens or 0 for response in responses
+        "prompt_tokens": (
+            sum(count for count in prompt_token_counts if count is not None)
+            if any(count is not None for count in prompt_token_counts)
+            else None
         ),
-        "completion_tokens": sum(
-            response.completion_tokens or 0 for response in responses
+        "completion_tokens": (
+            sum(count for count in completion_token_counts if count is not None)
+            if any(count is not None for count in completion_token_counts)
+            else None
         ),
         "model": getattr(client, "model", None) or os.getenv("NIM_MODEL"),
     }

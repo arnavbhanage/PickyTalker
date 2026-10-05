@@ -41,7 +41,7 @@ def _engine():
 
 @pytest.fixture
 def api(monkeypatch, tmp_path):
-    monkeypatch.delenv("PICKYTALKER_API_KEY", raising=False)
+    monkeypatch.setenv("PICKYTALKER_API_KEY", "")
     monkeypatch.setenv("NVIDIA_API_KEY", "")
     monkeypatch.setenv("NIM_MODEL", "")
     application = create_app(tmp_path)
@@ -189,7 +189,7 @@ def test_llm_410_is_mapped_to_safe_502(api):
         status_code = 410
 
     application.dependency_overrides[deps.get_llm_client] = lambda: FakeLLM([
-        UpstreamError("private provider detail and nvapi-sensitive-text")
+        UpstreamError("private provider detail and provider-key-sensitive-text")
     ])
     response = client.post(
         "/generate",
@@ -198,7 +198,7 @@ def test_llm_410_is_mapped_to_safe_502(api):
     assert response.status_code == 502
     assert response.json()["detail"]["upstream_status_code"] == 410
     assert "private provider detail" not in response.text
-    assert "nvapi-sensitive-text" not in response.text
+    assert "provider-key-sensitive-text" not in response.text
 
 
 def test_malformed_llm_output_is_safe_502(api):
