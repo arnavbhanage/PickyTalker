@@ -39,16 +39,35 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime? @map("email_verified")
-  image         String?
-  passwordHash  String?   @map("password_hash")
-  accounts      Account[]
-  sessions      Session[]
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime? @map("email_verified")
+  image          String?
+  passwordHash   String?   @map("password_hash")
+  sessionVersion Int       @default(0) @map("session_version")
+  accounts       Account[]
+  sessions       Session[]
 
   @@map("users")
+}
+
+model EmailVerificationCode {
+  id             String    @id
+  email          String
+  purpose        String
+  codeHash       String    @map("code_hash")
+  expiresAt      DateTime  @map("expires_at")
+  attempts       Int       @default(0)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  resendAt       DateTime  @map("resend_at")
+  usedAt         DateTime? @map("used_at")
+  grantHash      String?   @map("grant_hash")
+  grantExpiresAt DateTime? @map("grant_expires_at")
+
+  @@unique([email, purpose])
+  @@index([expiresAt])
+  @@map("email_verification_codes")
 }
 
 model VerificationToken {
