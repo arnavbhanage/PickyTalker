@@ -419,6 +419,65 @@ consent.
 
 ---
 
+## Frontend product shell
+
+The Next.js frontend lives in `frontend/` and currently provides the shared
+product structure for the upcoming interactive response workflow.
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Public landing page and product overview |
+| `/app` | Prepared application shell for writing history, profiling, generation, ranking, and explanations |
+| `/signin` | Account-access placeholder; authentication is not active |
+| `/terms` | Plain-English Terms of Service for the current student/demo project |
+| `/privacy` | Privacy policy describing current stateless processing, logging, and external AI use |
+
+The browser communicates only with the FastAPI backend. It does not call the
+external AI provider directly. API request and response types are centralized
+in `frontend/src/lib/types.ts`, and the browser client is in
+`frontend/src/lib/api.ts`.
+
+### Local full-stack development
+
+Open two PowerShell terminals from the repository root.
+
+Backend:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m scripts.build_artifacts
+python -m uvicorn app.backend.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Configure `NVIDIA_API_KEY` and `NIM_MODEL` in the root `.env` only when testing
+external response generation. Do not put provider secrets in any
+`NEXT_PUBLIC_` variable.
+
+Frontend:
+
+```powershell
+Set-Location frontend
+Copy-Item .env.example .env.local
+npm install
+npm run dev
+```
+
+`NEXT_PUBLIC_PICKYTALKER_API_URL` defaults to `http://127.0.0.1:8000` in the
+client configuration and can be changed in `frontend/.env.local`. Open
+`http://127.0.0.1:3000` for the landing page or
+`http://127.0.0.1:3000/app` for the application shell.
+
+### Current product limitations
+
+- The chatbot interaction and live `/profile` and `/respond` workflow are not implemented in this milestone.
+- Authentication and user accounts are not implemented.
+- Conversations, accounts, and style profiles are not persisted in a database.
+- External response generation may be slow or time out.
+- Production deployment is not configured.
+
+---
+
 ## Goal
 
 PickyTalker aims to explore whether measurable communication preferences can improve the selection of AI-generated responses for individual users.
