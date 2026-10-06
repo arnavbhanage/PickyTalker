@@ -9,5 +9,6 @@ export const API_CONFIG = {
     process.env.NEXT_PUBLIC_PICKYTALKER_API_URL || DEFAULT_API_URL,
   ),
   defaultTimeoutMs: 15_000,
-  generationTimeoutMs: 75_000,
+  // Provider attempts can take 120s and the backend may retry once.
+  generationTimeoutMs: 300_000,
 } as const;

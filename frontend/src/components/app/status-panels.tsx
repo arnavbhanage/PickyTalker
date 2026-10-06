@@ -8,6 +8,16 @@ const ERROR_COPY: Record<
   ApiErrorKind,
   { title: string; message: string; retryable: boolean }
 > = {
+  cancelled: {
+    title: "Request cancelled",
+    message: "Your draft is safe. You can try again when ready.",
+    retryable: true,
+  },
+  unauthorized: {
+    title: "Backend authorization required",
+    message: "Configure backend authorization on the server; do not expose an API key in the browser.",
+    retryable: false,
+  },
   backend_unavailable: {
     title: "Backend unavailable",
     message: "PickyTalker cannot reach the local service right now.",

@@ -1,4 +1,5 @@
 import { API_CONFIG } from "@/lib/config";
+import { isRespondResponse } from "@/lib/response-validation";
 import type {
   ApiErrorResponse,
   GenerateRequest,
@@ -15,6 +16,8 @@ import type {
 export type ApiErrorKind =
   | "backend_unavailable"
   | "timeout"
+  | "cancelled"
+  | "unauthorized"
   | "provider_unavailable"
   | "malformed_generation"
   | "validation"
@@ -44,11 +47,12 @@ function errorKind(status: number, payload: ApiErrorResponse): ApiErrorKind {
   const message =
     typeof detail === "string"
       ? detail
-      : detail && !Array.isArray(detail) && "message" in detail
+      : detail && typeof detail === "object" && !Array.isArray(detail) && "message" in detail && typeof detail.message === "string"
         ? detail.message
         : "";
 
   if (status === 408 || status === 504) return "timeout";
+  if (status === 401 || status === 403) return "unauthorized";
   if (status === 422) return "validation";
   if (status === 502 && /malformed|valid/i.test(message)) {
     return "malformed_generation";
@@ -66,26 +70,31 @@ async function apiRequest<TResponse, TBody = never>(
   options: RequestOptions = {},
 ): Promise<TResponse> {
   const controller = new AbortController();
+  let timedOut = false;
   const timeout = setTimeout(
-    () => controller.abort(),
+    () => { timedOut = true; controller.abort(); },
     options.timeoutMs ?? API_CONFIG.defaultTimeoutMs,
   );
   const abortFromCaller = () => controller.abort();
   options.signal?.addEventListener("abort", abortFromCaller, { once: true });
+  if (options.signal?.aborted) controller.abort();
 
   try {
+    if (controller.signal.aborted) throw new DOMException("Cancelled", "AbortError");
     const response = await fetch(`${API_CONFIG.baseUrl}${path}`, {
       method: body === undefined ? "GET" : "POST",
       headers: body === undefined ? undefined : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
     });
-    const payload = (await response.json().catch(() => ({}))) as
+    const payload = (await response.json().catch(() => null)) as
       | TResponse
       | ApiErrorResponse;
+    if (controller.signal.aborted) throw new DOMException("Cancelled", "AbortError");
 
     if (!response.ok) {
-      const errorPayload = payload as ApiErrorResponse;
+      const errorPayload = payload && typeof payload === "object" && !Array.isArray(payload)
+        ? payload as ApiErrorResponse : {};
       throw new PickyTalkerApiError(
         errorKind(response.status, errorPayload),
         "The PickyTalker API could not complete the request.",
@@ -94,13 +103,16 @@ async function apiRequest<TResponse, TBody = never>(
       );
     }
 
+    if (payload === null) {
+      throw new PickyTalkerApiError("malformed_generation", "The backend returned unreadable JSON.", response.status);
+    }
     return payload as TResponse;
   } catch (error) {
     if (error instanceof PickyTalkerApiError) throw error;
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if (controller.signal.aborted) {
       throw new PickyTalkerApiError(
-        "timeout",
-        "The request took longer than expected.",
+        timedOut ? "timeout" : "cancelled",
+        timedOut ? "The request took longer than expected." : "The request was cancelled.",
       );
     }
     throw new PickyTalkerApiError(
@@ -114,6 +126,9 @@ async function apiRequest<TResponse, TBody = never>(
 }
 
 function requireCandidates<T extends { candidates: unknown[] }>(response: T): T {
+  if (!response || !Array.isArray(response.candidates)) {
+    throw new PickyTalkerApiError("malformed_generation", "The backend returned an invalid response.");
+  }
   if (response.candidates.length === 0) {
     throw new PickyTalkerApiError(
       "no_candidates",
@@ -139,11 +154,16 @@ export const pickyTalkerApi = {
         ...options,
       }),
     ),
-  respond: async (request: RespondRequest, options?: RequestOptions) =>
-    requireCandidates(
+  respond: async (request: RespondRequest, options?: RequestOptions) => {
+    const response = requireCandidates(
       await apiRequest<RespondResponse, RespondRequest>("/respond", request, {
         timeoutMs: API_CONFIG.generationTimeoutMs,
         ...options,
       }),
-    ),
+    );
+    if (!isRespondResponse(response)) {
+      throw new PickyTalkerApiError("malformed_generation", "The backend returned an invalid selected response.");
+    }
+    return response;
+  },
 };
