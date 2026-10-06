@@ -63,7 +63,7 @@ async function apiRequest<TResponse, TBody = never>(
   options: RequestOptions = {},
 ): Promise<TResponse> {
   const controller = new AbortController();
-  const timeout = window.setTimeout(
+  const timeout = setTimeout(
     () => controller.abort(),
     options.timeoutMs ?? API_CONFIG.defaultTimeoutMs,
   );
@@ -105,7 +105,7 @@ async function apiRequest<TResponse, TBody = never>(
       "The PickyTalker backend could not be reached.",
     );
   } finally {
-    window.clearTimeout(timeout);
+    clearTimeout(timeout);
     options.signal?.removeEventListener("abort", abortFromCaller);
   }
 }
