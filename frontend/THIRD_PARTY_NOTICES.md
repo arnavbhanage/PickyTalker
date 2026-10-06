@@ -1,5 +1,14 @@
 # Third-party components
 
+## Skiper106 composer reference
+
+`src/components/chat/message-composer.tsx` uses the rounded input treatment of
+[Skiper UI's Smooth Caret Input (Skiper106)](https://skiper-ui.com/v1/skiper106)
+as a design reference. It is an original multiline implementation using the
+existing shadcn primitives, not a copy of the experimental single-line caret.
+The native caret, selection, IME composition, mobile input and keyboard semantics
+are retained; no DialKit/debug UI or additional animation dependencies are added.
+
 ## Aceternity Dotted Glow Background
 
 `src/components/ui/dotted-glow-background.tsx` adapts the canvas dot-grid and

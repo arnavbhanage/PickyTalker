@@ -1,26 +1,25 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
-import { ArrowUp, Feather, LockKeyhole } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
+import { Feather, LockKeyhole } from "lucide-react";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
-import { Textarea } from "@/components/ui/textarea";
+import { MessageComposer } from "./message-composer";
 import styles from "./chat-workspace.module.css";
 
 export function ChatWorkspace() {
-  // Phase 2: local layout preview only. No API, AI output, or persistence.
+  // Phase 3: real composer behavior, local messages only. No API or AI output.
   const [messages, setMessages] = useState<string[]>([]);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const conversationRef = useRef<HTMLDivElement>(null);
   const isEmpty = messages.length === 0;
 
-  function addLocalMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const message = inputRef.current?.value.trim();
-    if (!message) return;
+  function addLocalMessage(message: string) {
     setMessages((current) => [...current, message]);
-    event.currentTarget.reset();
-    inputRef.current?.focus();
   }
+
+  useEffect(() => {
+    const conversation = conversationRef.current;
+    if (conversation) conversation.scrollTop = conversation.scrollHeight;
+  }, [messages.length]);
 
   return (
     <section className={styles.workspace} aria-label="PickyTalker conversation workspace">
@@ -41,7 +40,7 @@ export function ChatWorkspace() {
               <h1>Your conversation</h1>
               <span>Just this session</span>
             </header>
-            <div className={styles.conversation} role="log" aria-label="Incoming messages" aria-live="polite" aria-relevant="additions" tabIndex={0}>
+            <div ref={conversationRef} className={styles.conversation} role="log" aria-label="Incoming messages" aria-live="polite" aria-relevant="additions" tabIndex={0}>
               <ol className={styles.messages}>
                 {messages.map((message, index) => (
                   <li className={styles.message} key={index}>
@@ -54,19 +53,7 @@ export function ChatWorkspace() {
           </>
         )}
 
-        <div className={styles.composerArea}>
-          <form className={styles.composer} onSubmit={addLocalMessage}>
-            <label className="sr-only" htmlFor="incoming-message">Message you want to reply to</label>
-            <Textarea ref={inputRef} id="incoming-message" name="incoming" className={styles.input} placeholder="Paste their message here…" rows={3} maxLength={2000} required aria-describedby="composer-note" />
-            <div className={styles.composerToolbar}>
-              <span>Make room for your voice.</span>
-              <Button type="submit" size="icon" className={styles.submit} aria-label="Add message to conversation">
-                <ArrowUp size={18} aria-hidden="true" />
-              </Button>
-            </div>
-          </form>
-          <p id="composer-note" className={styles.composerNote}>Messages stay in this tab. Reply generation comes next.</p>
-        </div>
+        <MessageComposer onSubmit={addLocalMessage} />
 
         {isEmpty ? <p className={styles.quietNote}><LockKeyhole size={12} aria-hidden="true" /> A little space to find the right words.</p> : null}
       </div>
