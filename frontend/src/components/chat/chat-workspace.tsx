@@ -1,25 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Feather, LockKeyhole } from "lucide-react";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
-import { MessageComposer } from "./message-composer";
+import { Button } from "@/components/ui/button";
+import { MessageComposer, type MessageComposerHandle } from "./message-composer";
+import { GenerationStatus } from "./generation-status";
+import { ResponseCard } from "./response-card";
+import { useChat } from "./use-chat";
 import styles from "./chat-workspace.module.css";
 
 export function ChatWorkspace() {
-  // Phase 3: real composer behavior, local messages only. No API or AI output.
-  const [messages, setMessages] = useState<string[]>([]);
+  const { turns, submit, busy } = useChat();
+  const composerRef = useRef<MessageComposerHandle>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
-  const isEmpty = messages.length === 0;
-
-  function addLocalMessage(message: string) {
-    setMessages((current) => [...current, message]);
-  }
+  const isEmpty = turns.length === 0;
 
   useEffect(() => {
     const conversation = conversationRef.current;
     if (conversation) conversation.scrollTop = conversation.scrollHeight;
-  }, [messages.length]);
+  }, [turns]);
 
   return (
     <section className={styles.workspace} aria-label="PickyTalker conversation workspace">
@@ -40,12 +40,23 @@ export function ChatWorkspace() {
               <h1>Your conversation</h1>
               <span>Just this session</span>
             </header>
-            <div ref={conversationRef} className={styles.conversation} role="log" aria-label="Incoming messages" aria-live="polite" aria-relevant="additions" tabIndex={0}>
+            <div ref={conversationRef} className={styles.conversation} role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text" tabIndex={0}>
               <ol className={styles.messages}>
-                {messages.map((message, index) => (
-                  <li className={styles.message} key={index}>
-                    <span className={styles.messageLabel}>Message to reply to</span>
-                    <p>{message}</p>
+                {turns.map((turn, index) => (
+                  <li className={styles.turn} key={turn.id}>
+                    <div className={styles.message}>
+                      <span className={styles.messageLabel}>Message to reply to</span>
+                      <p>{turn.incoming}</p>
+                    </div>
+                    {turn.status === "pending" ? <GenerationStatus /> : null}
+                    {turn.status === "failed" ? (
+                      <div className={styles.failure}>
+                        <p role="alert">{turn.error}</p>
+                        {index === turns.length - 1 ? <Button type="button" variant="outline" size="sm" disabled={busy}
+                          onClick={() => composerRef.current?.retry(turn.incoming)}>Retry generation</Button> : null}
+                      </div>
+                    ) : null}
+                    {turn.status === "complete" && turn.response ? <ResponseCard text={turn.response.best.candidate} /> : null}
                   </li>
                 ))}
               </ol>
@@ -53,11 +64,11 @@ export function ChatWorkspace() {
           </>
         )}
 
-        <MessageComposer onSubmit={addLocalMessage} />
+        <MessageComposer ref={composerRef} onSubmit={submit} busy={busy} submissionErrorHandled />
 
         {isEmpty ? <p className={styles.quietNote}><LockKeyhole size={12} aria-hidden="true" /> A little space to find the right words.</p> : null}
       </div>
-      <p className={styles.footer}>Thoughtfully chosen. Naturally yours.</p>
+      <p className={styles.footer}>Writing samples aren’t connected yet. Replies aren’t personalized to your style.</p>
     </section>
   );
 }

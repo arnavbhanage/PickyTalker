@@ -1,5 +1,25 @@
 # Third-party components
 
+## Chat generation and selected-reply references
+
+`src/components/ui/lattice-loader.tsx` and its CSS module adapt the 3x3 orbit
+pattern and opacity animation from [React Bits Lattice Loader](https://github.com/DavidHDev/react-bits/tree/main/src/ts-default/Micro/LatticeLoader).
+Changes: waiting-only subset, scoped CSS, no timer or status marks, completely
+static reduced-motion fallback. The React Bits license reproduced below applies
+to both Lattice Loader and Code Slots.
+
+`src/components/ui/text-generate-effect.tsx` adapts the word reveal from
+[Aceternity Text Generate Effect](https://ui.aceternity.com/components/text-generate-effect)
+([registry source](https://ui.aceternity.com/registry/text-generate-effect.json), author Manu Arora).
+Changes: CSS animation, exact whitespace preservation, bounded total reveal,
+immediate full screen-reader text and static reduced-motion fallback. It is
+mounted only after a complete validated backend response, not simulated streaming.
+
+[Skiper86](https://skiper-ui.com/v1/skiper86) supplies the soft AI-gradient design
+reference for the otherwise static generation status. [Skiper42](https://skiper-ui.com/v1/skiper42)
+supplies the copy/check interaction reference. These are original implementations
+using existing shadcn/Lucide components; no restricted Pro source was copied.
+
 ## Skiper106 composer reference
 
 `src/components/chat/message-composer.tsx` uses the rounded input treatment of

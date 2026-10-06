@@ -29,4 +29,9 @@ OAuth callback is `http://localhost:3000/api/auth/callback/google`.
 npm run lint
 npx tsc --noEmit
 npm run build
+npm run test:chat
+npm run test:auth
 ```
+
+See [chat integration](CHAT_INTEGRATION.md) for FastAPI setup, request behavior,
+current personalization limits, and deployment requirements.

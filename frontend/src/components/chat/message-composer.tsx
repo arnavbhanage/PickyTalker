@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,11 +11,15 @@ export const MAX_MESSAGE_CHARACTERS = 2000;
 type MessageComposerProps = {
   onSubmit: (message: string) => void | Promise<void>;
   busy?: boolean;
+  ref?: Ref<MessageComposerHandle>;
+  submissionErrorHandled?: boolean;
 };
+
+export type MessageComposerHandle = { retry: (message: string) => void };
 
 // Skiper106-inspired rounded input treatment, retaining a native multiline
 // caret: its experimental single-line animated caret is not suitable here.
-export function MessageComposer({ onSubmit, busy = false }: MessageComposerProps) {
+export function MessageComposer({ onSubmit, busy = false, ref, submissionErrorHandled = false }: MessageComposerProps) {
   const id = useId();
   const inputId = `incoming-${id}`;
   const helpId = `composer-help-${id}`;
@@ -23,6 +27,7 @@ export function MessageComposer({ onSubmit, busy = false }: MessageComposerProps
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [focusEpoch, setFocusEpoch] = useState(0);
   const draftRef = useRef("");
   const submittingRef = useRef(false);
   const composingRef = useRef(false);
@@ -40,17 +45,17 @@ export function MessageComposer({ onSubmit, busy = false }: MessageComposerProps
     input.style.overflowY = input.scrollHeight > 180 ? "auto" : "hidden";
   }, [draft]);
 
-  async function submitDraft() {
+  async function submitDraft(retryMessage?: string) {
     // Ref closes the gap before React commits the disabled state.
     if (busy || submittingRef.current || composingRef.current) return;
     const originalDraft = draftRef.current;
-    const message = originalDraft.trim();
+    const message = retryMessage ?? originalDraft.trim();
     if (!message) {
       setError("Paste a message before sending.");
       inputRef.current?.focus();
       return;
     }
-    if (Array.from(originalDraft).length > MAX_MESSAGE_CHARACTERS) {
+    if (Array.from(retryMessage ?? originalDraft).length > MAX_MESSAGE_CHARACTERS) {
       setError(`Keep your message to ${MAX_MESSAGE_CHARACTERS.toLocaleString("en-US")} characters or fewer.`);
       inputRef.current?.focus();
       return;
@@ -62,15 +67,18 @@ export function MessageComposer({ onSubmit, busy = false }: MessageComposerProps
     try {
       await onSubmit(message);
       // Never erase a newer draft if the parent changes while awaiting success.
-      if (draftRef.current === originalDraft) {
+      if (draftRef.current === originalDraft && originalDraft.trim() === message) {
         draftRef.current = "";
         setDraft("");
       }
     } catch {
-      setError("Couldn't add your message. Your draft is still here—try again.");
+      if (!submissionErrorHandled) setError("Couldn't add your message. Your draft is still here—try again.");
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
+      // An immediate failure may batch both disabled transitions into one
+      // render. Still restore focus after every completed submission/retry.
+      setFocusEpoch((epoch) => epoch + 1);
     }
   }
 
@@ -88,13 +96,15 @@ export function MessageComposer({ onSubmit, busy = false }: MessageComposerProps
       restoreFocusRef.current = false;
       inputRef.current?.focus();
     }
-  }, [disabled, draft, error]);
+  }, [disabled, draft, error, focusEpoch]);
 
-  function requestSubmission() {
+  function requestSubmission(retryMessage?: string) {
     if (busy || submittingRef.current || composingRef.current) return;
     restoreFocusRef.current = true;
-    void submitDraft();
+    void submitDraft(retryMessage);
   }
+
+  useImperativeHandle(ref, () => ({ retry: requestSubmission }));
 
   return (
     <div className={styles.area}>
@@ -129,14 +139,14 @@ export function MessageComposer({ onSubmit, busy = false }: MessageComposerProps
           <span className={styles.shortcuts}><kbd>Enter</kbd> to send · <kbd>Shift + Enter</kbd> for a new line</span>
           <div className={styles.actions}>
             {characterCount >= 1600 ? <span className={styles.count} data-over-limit={characterCount > MAX_MESSAGE_CHARACTERS} aria-label={`${characterCount} of ${MAX_MESSAGE_CHARACTERS} characters`}>{characterCount.toLocaleString("en-US")} / 2,000</span> : null}
-            <Button type="submit" size="icon" className={styles.submit} disabled={disabled} aria-label="Add message to conversation">
+            <Button type="submit" size="icon" className={styles.submit} disabled={disabled} aria-label="Generate reply">
               <ArrowUp size={18} aria-hidden="true" />
             </Button>
           </div>
         </div>
       </form>
       {error ? <p className={styles.error} id={errorId} role="alert">{error}</p> : null}
-      <p id={helpId} className={styles.note}>Messages stay in this tab. Reply generation comes next.</p>
+      <p id={helpId} className={styles.note}>Sent to the AI provider. Review replies before sending.</p>
     </div>
   );
 }

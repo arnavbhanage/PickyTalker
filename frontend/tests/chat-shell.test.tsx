@@ -1,8 +1,9 @@
-import { test, before, afterEach } from "node:test";
+import { test, before, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import React from "react";
 import { JSDOM } from "jsdom";
+import { replyText, respondFixture } from "./fixtures/respond";
 
 const require = createRequire(import.meta.url);
 require.extensions[".css"] = (module) => {
@@ -12,6 +13,8 @@ require.extensions[".css"] = (module) => {
 let ChatWorkspace: typeof import("../src/components/chat/chat-workspace").ChatWorkspace;
 let DottedGlowBackground: typeof import("../src/components/ui/dotted-glow-background").DottedGlowBackground;
 let MessageComposer: typeof import("../src/components/chat/message-composer").MessageComposer;
+let ResponseCard: typeof import("../src/components/chat/response-card").ResponseCard;
+let GenerationStatus: typeof import("../src/components/chat/generation-status").GenerationStatus;
 let render: typeof import("@testing-library/react").render;
 let cleanup: typeof import("@testing-library/react").cleanup;
 let fireEvent: typeof import("@testing-library/react").fireEvent;
@@ -58,6 +61,12 @@ before(async () => {
   ({ ChatWorkspace } = await import("../src/components/chat/chat-workspace"));
   ({ DottedGlowBackground } = await import("../src/components/ui/dotted-glow-background"));
   ({ MessageComposer } = await import("../src/components/chat/message-composer"));
+  ({ ResponseCard } = await import("../src/components/chat/response-card"));
+  ({ GenerationStatus } = await import("../src/components/chat/generation-status"));
+});
+
+beforeEach((t) => {
+  if ("mock" in t) t.mock.method(globalThis, "fetch", async () => Response.json(respondFixture()));
 });
 
 afterEach(() => {
@@ -75,25 +84,27 @@ test("empty shell has a decorative non-interactive background and accessible com
   assert.equal(decoration?.getAttribute("aria-hidden"), "true");
   assert.equal((decoration as HTMLElement).style.pointerEvents, "none");
   assert.ok(ui.getByRole("textbox", { name: "Message you want to reply to" }));
-  assert.ok(ui.getByRole("button", { name: "Add message to conversation" }));
+  assert.ok(ui.getByRole("button", { name: "Generate reply" }));
   assert.equal(ui.queryByRole("log"), null);
   assert.equal(ui.queryByRole("complementary"), null, "no sidebar");
 });
 
-test("first local message removes dots, preserves multiline text and returns focus without any fetch", async (t) => {
-  const fetchMock = t.mock.method(globalThis, "fetch", () => { throw new Error("Local composer phases must not call a backend"); });
+test("first real request removes dots, preserves multiline text and restores composer focus", async (t) => {
+  const fetchMock = t.mock.method(globalThis, "fetch", async () => Response.json(respondFixture()));
   const ui = render(<ChatWorkspace />);
   const input = ui.getByRole("textbox") as HTMLTextAreaElement;
   fireEvent.change(input, { target: { value: "Can you send the notes?\nTomorrow works too." } });
-  await userEvent.setup().click(ui.getByRole("button", { name: "Add message to conversation" }));
+  await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
+  await waitFor(() => assert.equal(input.value, ""));
   assert.equal(ui.container.querySelector("[data-dotted-glow]"), null);
   assert.equal(ui.container.querySelector("[data-chat-state]")?.getAttribute("data-chat-state"), "active");
   assert.equal(ui.getByRole("log").querySelector("p")?.textContent, "Can you send the notes?\nTomorrow works too.");
   assert.equal(input.value, "");
   assert.equal(document.activeElement, input);
-  assert.ok(ui.getByText("Messages stay in this tab. Reply generation comes next."));
-  assert.equal(fetchMock.mock.callCount(), 0);
-  assert.equal(ui.queryByRole("status"), null, "no generation loader");
+  assert.ok(ui.getByText("Sent to the AI provider. Review replies before sending."));
+  assert.equal(fetchMock.mock.callCount(), 1);
+  assert.equal(ui.container.querySelector("[data-lattice-loader]"), null);
+  assert.equal(ui.container.querySelector("[data-response-visual]")?.textContent, replyText);
 });
 
 test("blank local input leaves the empty state and background intact", () => {
@@ -146,7 +157,7 @@ test("animation pauses in hidden tabs and cleans up when the background is remov
   assert.ok(disconnections > before);
 });
 
-test("Enter submits one local message; Shift+Enter keeps a multiline draft", async () => {
+test("Enter generates one reply; Shift+Enter keeps a multiline draft", async () => {
   const ui = render(<ChatWorkspace />);
   const user = userEvent.setup();
   const input = ui.getByRole("textbox") as HTMLTextAreaElement;
@@ -272,14 +283,177 @@ test("externally busy composer cannot submit or change its retained draft", () =
   assert.equal(input.value, "Retained draft");
 });
 
-test("multiple local messages append in order, keeping dots absent and making no network requests", async (t) => {
-  const fetchMock = t.mock.method(globalThis, "fetch", () => { throw new Error("No network in Phase 3"); });
+test("multiple messages append in order, sending no received or generated text as personal history", async (t) => {
+  const fetchMock = t.mock.method(globalThis, "fetch", async () => Response.json(respondFixture()));
   const ui = render(<ChatWorkspace />);
   for (const message of ["First synthetic message", "Second synthetic message"]) {
     fireEvent.change(ui.getByRole("textbox"), { target: { value: message } });
-    await userEvent.setup().click(ui.getByRole("button"));
+    await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
+    await waitFor(() => assert.equal((ui.getByRole("textbox") as HTMLTextAreaElement).value, ""));
   }
-  assert.deepEqual(Array.from(ui.getByRole("log").querySelectorAll("li p"), (node) => node.textContent), ["First synthetic message", "Second synthetic message"]);
+  assert.deepEqual(Array.from(ui.getByRole("log").querySelectorAll(".message p"), (node) => node.textContent), ["First synthetic message", "Second synthetic message"]);
   assert.equal(ui.container.querySelector("[data-dotted-glow]"), null);
-  assert.equal(fetchMock.mock.callCount(), 0);
+  assert.equal(fetchMock.mock.callCount(), 2);
+  for (const call of fetchMock.mock.calls) assert.deepEqual(JSON.parse((call.arguments[1] as RequestInit).body as string).history, []);
+});
+
+test("real request stays pending with one loader, retained input and no early reply", async (t) => {
+  let complete!: (response: Response) => void;
+  const fetch = t.mock.method(globalThis, "fetch", () => new Promise<Response>((resolve) => { complete = resolve; }));
+  const ui = render(<ChatWorkspace />);
+  const input = ui.getByRole("textbox") as HTMLTextAreaElement;
+  fireEvent.change(input, { target: { value: "A synthetic slow request" } });
+  fireEvent.submit(ui.container.querySelector("form")!);
+  fireEvent.submit(ui.container.querySelector("form")!);
+  assert.equal(fetch.mock.callCount(), 1);
+  assert.equal(ui.container.querySelectorAll("[data-lattice-loader]").length, 1);
+  assert.equal(ui.container.querySelector("[data-selected-response]"), null);
+  assert.equal(ui.container.querySelector("[data-dotted-glow]"), null);
+  assert.equal(input.value, "A synthetic slow request");
+  assert.ok(input.disabled);
+  await act(async () => { complete(Response.json(respondFixture())); });
+  assert.equal(ui.container.querySelector("[data-lattice-loader]"), null);
+  assert.equal(ui.container.querySelector("[data-response-visual]")?.textContent, replyText);
+  assert.equal(input.value, "");
+  assert.equal(document.activeElement, input);
+});
+
+test("failed request retains input; explicit retry reuses the same incoming turn", async (t) => {
+  const fetch = t.mock.method(globalThis, "fetch", async () => { throw new TypeError("secret diagnostic"); });
+  const ui = render(<ChatWorkspace />);
+  const input = ui.getByRole("textbox") as HTMLTextAreaElement;
+  const message = "Please keep\n  my synthetic draft.";
+  fireEvent.change(input, { target: { value: message } });
+  await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
+  assert.match(ui.getByRole("alert").textContent!, /Can't reach PickyTalker/);
+  assert.equal(input.value, message);
+  assert.equal(input.disabled, false);
+  assert.ok(!ui.container.textContent!.includes("secret diagnostic"));
+  assert.equal(ui.container.querySelector("[data-selected-response]"), null);
+  await userEvent.setup().click(ui.getByRole("button", { name: "Retry generation" }));
+  assert.equal(document.activeElement, input, "even an immediately failed retry restores input focus");
+  assert.equal(ui.getByRole("log").querySelectorAll("li").length, 1);
+  fetch.mock.mockImplementation(async () => Response.json(respondFixture()));
+  await userEvent.setup().click(ui.getByRole("button", { name: "Retry generation" }));
+  await waitFor(() => assert.equal(input.value, ""));
+  assert.equal(ui.getByRole("log").querySelectorAll("li").length, 1);
+  assert.equal(fetch.mock.callCount(), 3);
+  assert.equal(ui.queryByRole("alert"), null);
+  assert.equal(document.activeElement, input);
+});
+
+test("retrying a failed message does not erase a newer draft", async (t) => {
+  const fetch = t.mock.method(globalThis, "fetch", async () => { throw new TypeError("offline"); });
+  const ui = render(<ChatWorkspace />);
+  const input = ui.getByRole("textbox") as HTMLTextAreaElement;
+  fireEvent.change(input, { target: { value: "Original synthetic draft" } });
+  await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
+  fireEvent.change(input, { target: { value: "My edited draft must survive" } });
+  fetch.mock.mockImplementation(async () => Response.json(respondFixture()));
+  await userEvent.setup().click(ui.getByRole("button", { name: "Retry generation" }));
+  await waitFor(() => assert.equal(input.disabled, false));
+  assert.equal(input.value, "My edited draft must survive");
+  assert.equal(ui.getByRole("log").querySelectorAll("li").length, 1);
+  const body = JSON.parse((fetch.mock.calls[1].arguments[1] as RequestInit).body as string);
+  assert.equal(body.incoming, "Original synthetic draft");
+});
+
+test("resubmitting an unchanged failed draft also reuses its turn", async (t) => {
+  const fetch = t.mock.method(globalThis, "fetch", async () => Response.json({}, { status: 504 }));
+  const ui = render(<ChatWorkspace />);
+  fireEvent.change(ui.getByRole("textbox"), { target: { value: "A synthetic timeout" } });
+  await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
+  assert.match(ui.getByRole("alert").textContent!, /took too long/);
+  fetch.mock.mockImplementation(async () => Response.json(respondFixture()));
+  await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
+  assert.equal(ui.getByRole("log").querySelectorAll("li").length, 1);
+  assert.equal(fetch.mock.callCount(), 2);
+});
+
+test("malformed response never renders a reply and preserves the draft", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => Response.json({ best: { candidate: "Unsafe to display without valid schema" } }));
+  const ui = render(<ChatWorkspace />);
+  fireEvent.change(ui.getByRole("textbox"), { target: { value: "A synthetic malformed request" } });
+  await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
+  assert.match(ui.getByRole("alert").textContent!, /usable reply/);
+  assert.equal(ui.container.querySelector("[data-selected-response]"), null);
+  assert.ok(!ui.container.textContent!.includes("Unsafe to display"));
+  assert.equal((ui.getByRole("textbox") as HTMLTextAreaElement).value, "A synthetic malformed request");
+});
+
+test("unmount aborts the real request and ignores a late result", async (t) => {
+  let signal!: AbortSignal;
+  let complete!: (response: Response) => void;
+  t.mock.method(globalThis, "fetch", (_url: RequestInfo | URL, init?: RequestInit) => {
+    signal = init!.signal!;
+    return new Promise<Response>((resolve) => { complete = resolve; });
+  });
+  const ui = render(<ChatWorkspace />);
+  fireEvent.change(ui.getByRole("textbox"), { target: { value: "A synthetic abandoned request" } });
+  fireEvent.submit(ui.container.querySelector("form")!);
+  ui.unmount();
+  assert.ok(signal.aborted);
+  await act(async () => { complete(Response.json(respondFixture())); });
+  assert.equal(ui.container.textContent, "");
+});
+
+test("waiting copy changes only after sixty seconds, without invented percentages", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const ui = render(<GenerationStatus />);
+  assert.match(ui.getByRole("status").textContent!, /Generating and ranking/);
+  act(() => t.mock.timers.tick(60_000));
+  assert.match(ui.getByRole("status").textContent!, /Still waiting on the AI provider/);
+  assert.ok(!ui.container.textContent!.includes("%"));
+  ui.unmount();
+  t.mock.timers.reset();
+});
+
+test("selected reply is exact and untruncated, including Unicode, tabs and repeated whitespace", () => {
+  const text = replyText + "A long synthetic reply. ".repeat(200) + "\n  Final line.\n";
+  const ui = render(<ResponseCard text={text} />);
+  assert.equal(ui.container.querySelector("[data-response-visual]")?.textContent, text);
+  assert.equal(ui.container.querySelector("[data-selected-response] > .sr-only")?.textContent, text);
+  assert.ok(ui.getByRole("article", { name: "Selected reply" }));
+  assert.equal(ui.queryByText("Synthetic test reason"), null);
+  assert.equal(ui.queryByRole("slider"), null);
+});
+
+test("keyboard copy writes only exact reply text and shows temporary feedback", async () => {
+  const user = userEvent.setup();
+  const ui = render(<ResponseCard text={replyText} />);
+  await user.tab();
+  assert.equal(document.activeElement, ui.getByRole("button", { name: "Copy reply" }));
+  await user.keyboard("{Enter}");
+  assert.equal(await navigator.clipboard.readText(), replyText);
+  assert.ok(ui.getByRole("button", { name: "Reply copied" }));
+  assert.match(ui.getByRole("status").textContent!, /copied to clipboard/);
+  await waitFor(() => assert.ok(ui.getByRole("button", { name: "Copy reply" })), { timeout: 3000 });
+});
+
+test("reduced-motion reply is static and complete; preference changes keep exact text", () => {
+  const ui = render(<ResponseCard text={replyText} />);
+  assert.equal(ui.container.querySelectorAll("[data-response-visual] span").length, 0);
+  assert.equal(ui.container.querySelector("[data-response-visual]")?.textContent, replyText);
+  act(() => { reduced = false; mediaListeners.forEach((listener) => listener()); });
+  assert.ok(ui.container.querySelectorAll("[data-response-visual] span").length > 0);
+  assert.equal(ui.container.querySelector("[data-response-visual]")?.textContent, replyText);
+  act(() => { reduced = true; mediaListeners.forEach((listener) => listener()); });
+  assert.equal(ui.container.querySelectorAll("[data-response-visual] span").length, 0);
+});
+
+test("reduced-motion lattice is explicitly static and responds to preference changes", () => {
+  const ui = render(<GenerationStatus />);
+  assert.equal(ui.container.querySelector("[data-lattice-loader]")?.getAttribute("data-static"), "true");
+  act(() => { reduced = false; mediaListeners.forEach((listener) => listener()); });
+  assert.equal(ui.container.querySelector("[data-lattice-loader]")?.getAttribute("data-static"), null);
+});
+
+test("blocked clipboard shows an honest error rather than claiming it copied", async (t) => {
+  const user = userEvent.setup();
+  t.mock.method(navigator.clipboard, "writeText", async () => { throw new DOMException("Blocked", "NotAllowedError"); });
+  const ui = render(<ResponseCard text={replyText} />);
+  await user.click(ui.getByRole("button", { name: "Copy reply" }));
+  assert.ok(ui.getByRole("button", { name: "Copy reply" }));
+  assert.match(ui.getByRole("alert").textContent!, /Clipboard access was blocked/);
+  assert.equal(ui.getByRole("status").textContent, "");
 });

@@ -16,6 +16,19 @@
 .conversation { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 30px 4px; scrollbar-width: thin; }
 .conversation:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; border-radius: 8px; }
 .messages { display: flex; flex-direction: column; gap: 20px; width: min(720px, 100%); margin: 0 auto; padding: 0; list-style: none; }
+.turn { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.generation { display: flex; align-items: center; gap: 15px; padding: 16px 18px; border: 1px solid #edf0f6; border-radius: 16px; background: linear-gradient(110deg, #f8faff, #fcf9ff 60%, #fff); }
+.generationTitle { margin: 0; color: #526784; font-size: 13px; font-weight: 550; }
+.generationDetail { margin: 5px 0 0; color: #657184; font-size: 11px; line-height: 1.6; }
+.failure { border: 1px solid #ecdcd6; background: #fdfaf8; border-radius: 16px; padding: 16px 18px; }
+.failure p { margin: 0 0 12px; font-size: 13px; line-height: 1.7; color: #86584a; }
+.response { min-width: 0; border: 1px solid #e7ebf2; border-radius: 18px; padding: 12px 20px 22px; background: #fff; box-shadow: 0 3px 12px rgb(25 29 38 / 2%); }
+.responseHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.responseHeader > span { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 550; color: #617491; }
+.copy { min-height: 40px; color: #627086; font-size: 11px; }
+.copyIcon { display: inline-flex; animation: copyFeedback 150ms ease-out; }
+.copyError { margin: 12px 0 0; color: #86584a; font-size: 12px; line-height: 1.6; }
+@keyframes copyFeedback { from { opacity: 0.4; transform: scale(0.85); } to { opacity: 1; transform: none; } }
 .message { align-self: flex-end; max-width: 85%; min-width: 0; border: 1px solid #e6eaf2; border-radius: 18px 18px 5px 18px; padding: 16px 20px; background: #f5f7fb; }
 .messageLabel { color: #68748a; font-size: 10px; font-weight: 550; }
 .message p { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.7; }
@@ -27,6 +40,8 @@
   .active { padding: 0 16px 16px; }
   .conversationHeader > span { display: none; }
   .message { max-width: 95%; padding: 14px 16px; }
+  .response { padding: 10px 16px 18px; }
+  .copy { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .workspace *, .workspace *::before, .workspace *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
