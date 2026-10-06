@@ -1,0 +1,35 @@
+.shell:global(.app-shell) {
+  background: #f7f8fa;
+}
+
+.main:global(.app-main) {
+  padding: 28px 24px 24px;
+}
+
+.tagline {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .shell :global(.app-header-inner) {
+    width: calc(100% - 32px);
+    gap: 12px;
+  }
+
+  .shell :global(.auth-controls) {
+    gap: 8px;
+  }
+
+  .shell :global(.auth-user-name) {
+    display: none;
+  }
+
+  .main:global(.app-main) {
+    padding: 14px 12px 18px;
+  }
+
+  .tagline {
+    display: none;
+  }
+}

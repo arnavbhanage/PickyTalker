@@ -1,4 +1,14 @@
-# React Bits Code Slots
+# Third-party components
+
+## Aceternity Dotted Glow Background
+
+`src/components/ui/dotted-glow-background.tsx` adapts the canvas dot-grid and
+triangular glow treatment from [Aceternity UI](https://ui.aceternity.com/components/dotted-glow-background)
+([registry source](https://ui.aceternity.com/registry/dotted-glow-background.json), author Manu Arora).
+Changes: a restrained light-theme subset, stable per-dot variation, static
+reduced-motion rendering, tab-visibility pausing, and resize/unmount cleanup.
+
+## React Bits Code Slots
 
 `src/components/auth/CodeSlots.tsx` and `CodeSlots.css` are adapted from
 [React Bits](https://github.com/DavidHDev/react-bits/tree/main/src/ts-default/Micro/CodeSlots).
