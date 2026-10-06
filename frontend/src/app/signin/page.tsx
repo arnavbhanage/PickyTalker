@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicPageShell } from "@/components/shared/public-page-shell";
-import { SITE_LINKS } from "@/lib/links";
+import { SITE_LINKS } from "@/lib/site-links";
 
 export const metadata: Metadata = { title: "Sign in" };
 

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { SITE_LINKS, SOCIAL_LINKS } from "@/lib/links";
+import { SOCIAL_LINKS } from "@/lib/links";
+import { SITE_LINKS } from "@/lib/site-links";
 import { MagneticButton } from "./magnetic-button";
 
 function LinkedInIcon() {

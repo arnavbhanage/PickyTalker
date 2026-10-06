@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { SITE_LINKS } from "@/lib/links";
+import { SITE_LINKS } from "@/lib/site-links";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (

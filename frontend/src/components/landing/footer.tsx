@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CONTACT_EMAIL, SITE_LINKS, SOCIAL_LINKS } from "@/lib/links";
+import { CONTACT_EMAIL, SOCIAL_LINKS } from "@/lib/links";
+import { SITE_LINKS } from "@/lib/site-links";
 import { MagneticButton } from "./magnetic-button";
 
 function FooterSocial({ kind }: { kind: "linkedin" | "github" }) {

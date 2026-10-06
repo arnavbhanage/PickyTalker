@@ -53,7 +53,10 @@ function errorKind(status: number, payload: ApiErrorResponse): ApiErrorKind {
   if (status === 502 && /malformed|valid/i.test(message)) {
     return "malformed_generation";
   }
-  if (status === 502 || status === 503) return "provider_unavailable";
+  if (status === 502 || (status === 503 && /LLM|language model/i.test(message))) {
+    return "provider_unavailable";
+  }
+  if (status === 503) return "backend_unavailable";
   return "unexpected";
 }
 
