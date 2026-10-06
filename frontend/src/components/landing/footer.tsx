@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CONTACT_EMAIL, SOCIAL_LINKS } from "@/lib/links";
+import { CONTACT_EMAIL, SITE_LINKS, SOCIAL_LINKS } from "@/lib/links";
 import { MagneticButton } from "./magnetic-button";
 
 function FooterSocial({ kind }: { kind: "linkedin" | "github" }) {
@@ -24,13 +24,13 @@ export function Footer() {
         </div>
         <div className="footer-links">
           <div>
-            <span className="footer-heading">Explore</span>
-            <Link href="/#product">How it works</Link>
+            <span className="footer-heading">Product</span>
+            <Link href={SITE_LINKS.product}>How it works</Link>
           </div>
           <div>
             <span className="footer-heading">Information</span>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/terms">Terms</Link>
+            <Link href={SITE_LINKS.privacy}>Privacy</Link>
+            <Link href={SITE_LINKS.terms}>Terms</Link>
           </div>
           <div>
             <span className="footer-heading">Connect</span>

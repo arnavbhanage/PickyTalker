@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { SOCIAL_LINKS } from "@/lib/links";
+import { SITE_LINKS, SOCIAL_LINKS } from "@/lib/links";
 import { MagneticButton } from "./magnetic-button";
 
 function LinkedInIcon() {
@@ -49,13 +49,13 @@ export function Navbar() {
         </Link>
 
         <div className="desktop-nav-links">
-          <a href="#product">Product</a>
-          <a href="#contact">Contact</a>
+          <Link href={SITE_LINKS.product}>Product</Link>
+          <Link href={SITE_LINKS.contact}>Contact</Link>
         </div>
 
         <div className="desktop-nav-actions">
           <SocialControls />
-          <Link className="button button-dark button-small" href="/signin">
+          <Link className="button button-dark button-small" href={SITE_LINKS.signIn}>
             Get started
           </Link>
         </div>
@@ -74,16 +74,16 @@ export function Navbar() {
       </nav>
 
       <div className="mobile-menu" id="mobile-navigation" hidden={!menuOpen}>
-        <a href="#product" onClick={closeMenu}>
+        <Link href={SITE_LINKS.product} onClick={closeMenu}>
           Product
-        </a>
-        <a href="#contact" onClick={closeMenu}>
+        </Link>
+        <Link href={SITE_LINKS.contact} onClick={closeMenu}>
           Contact
-        </a>
+        </Link>
         <div className="mobile-menu-socials">
           <SocialControls />
         </div>
-        <Link className="button button-dark" href="/signin" onClick={closeMenu}>
+        <Link className="button button-dark" href={SITE_LINKS.signIn} onClick={closeMenu}>
           Get started
         </Link>
       </div>
