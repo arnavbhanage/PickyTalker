@@ -1,4 +1,4 @@
-# Chat integration — through Phase 6
+# Chat integration — through Phase 8
 
 The protected `/app` shell keeps the existing Auth.js/session boundary. The chat
 calls the existing `pickyTalkerApi.respond` client, not NVIDIA directly. Configure
@@ -59,7 +59,7 @@ Unicode. No scoring, reranking, explanation generation or additional request is
 performed in the browser. Empty reasons and a single candidate have honest
 fallbacks, not invented explanations. Raw scores, contribution vectors and
 percentages are not displayed. The panel reiterates that there is no personal
-style profile yet. Ratings remain deferred to Phase 7.
+style profile yet. Ratings were added separately in Phase 7 below.
 
 The disclosure is keyboard-accessible with `aria-expanded`, linked panel labels
 and independent state/IDs for each reply. Opening it does not restart the main
@@ -86,6 +86,64 @@ an HTTPS backend and an explicitly allowed deployed origin or an authenticated
 server-side proxy. If `PICKYTALKER_API_KEY` is enabled, handle it server-side;
 never put it or `NVIDIA_API_KEY` in a `NEXT_PUBLIC_` value. This phase does not
 change backend authorization, CORS, model artifacts or database schema.
+
+## Phase 7 — response rating
+
+Every successful selected reply now has `Was this response useful?` and a 1–5
+React Bits Peek Rating adaptation. Hover/focus previews lift and label the
+stars; selection uses existing shadcn buttons with Radix radio semantics.
+Tab enters the group, Left/Right select, Space/Enter choose, and Clear removes
+the current rating. Buttons have 44px touch targets; controls can wrap in a
+narrow card, and reduced-motion/forced-colors fallbacks are provided in CSS.
+The group is linked to its label and persistence note; a named polite status
+announces selection. Ratings are independent per response and do not change
+the reveal, exact copy text, ranking or explanations.
+
+Ratings live in React memory only. They are not sent to FastAPI, saved to the
+database or written to browser storage. Refresh/navigation/unmount loses them.
+The visible note says `Only kept in this session—not saved or sent.` No
+feedback endpoint or database persistence was added, and no training or ranking
+benefit is claimed. There is no rating UI for pending or failed turns.
+
+## Phase 8 — account polish
+
+The existing Auth.js server guard still redirects a missing user to `/signin`.
+The layout reads the session once and passes only name, email and image to the
+app shell; it does not pass session tokens, expiry, database IDs or credentials.
+The header now has a discreet shadcn/Radix account popover instead of a separate
+name/sign-out strip. It shows the signed-in identity and a session-only data
+notice. Existing `signOutCurrentUser` is reused without changing the auth flow;
+the action button disables while sign-out is pending. Escape or the close
+button dismisses the popover and restores trigger focus. Long identity text
+wraps inside a collision-aware, viewport-constrained panel; mobile uses a
+44px avatar-only trigger. Opening the account control does not remount chat.
+
+No existing style-profile viewer was found, so none was invented. No sidebar,
+new settings page, auth rebuild, OTP change or database change was added.
+The landing-page auth controls are untouched.
+
+## Phases 7 and 8 — verification scope
+
+Phase 7: production build PASS; `tsc --noEmit` PASS; ESLint PASS; chat/API tests
+**63/63 PASS**. Tests cover keyboard rating, preview versus committed state,
+change/clear, independent ratings, remount reset, no persistence request,
+successful-only rendering and unchanged exact reply copy/explanations.
+
+Phase 8 adds isolated tests of the real server layout with narrow auth/redirect
+stubs, plus account open/close/focus, missing and long identity, the supplied
+sign-out action, pending duplicate prevention, and preserved drafts/ratings.
+These are unit/component checks, not a claimed live login test.
+
+Combined Phase 7/8 checks: production build PASS; `tsc --noEmit` PASS;
+ESLint PASS; chat/API/layout/component tests **69/69 PASS**; existing
+auth/OTP/email tests **41/41 PASS**; `git diff --check` PASS. No Git staging,
+commit or push was performed.
+
+**Phase 9 is intentionally deferred at the user's request.** Do the final
+signed-in/signed-out browser flow, actual mobile layout and reduced-motion QA,
+live provider/error path, console/overflow/security review and backend pytest
+together with the user. No temporary servers, real email, live provider call or
+database write was started for Phases 7 and 8.
 
 ## Verification history — Phases 4 and 5
 
@@ -170,3 +228,18 @@ files are unchanged. No Git staging, commit or push was performed.
   `smooth-textarea.module.css`, `dotted-glow-background.tsx`.
 - Tests/docs: `tests/chat-shell.test.tsx`, `THIRD_PARTY_NOTICES.md`,
   `CHAT_INTEGRATION.md`.
+
+## Changed files — Phases 7 and 8
+
+- Phase 7: `src/components/ui/peek-rating.tsx`, `peek-rating.module.css`;
+  `src/components/chat/response-rating.tsx`, `response-rating.module.css`,
+  `response-card.tsx`; `tests/chat-shell.test.tsx`; `THIRD_PARTY_NOTICES.md`.
+- Phase 8: `src/components/ui/popover.tsx`;
+  `src/components/app/account-control.tsx`, `account-control.module.css`,
+  `app-shell.tsx`, `app-shell.module.css`; `src/app/app/layout.tsx`;
+  `tests/app-layout.test.ts`, `tests/chat-shell.test.tsx`; `package.json`.
+- Shared report: `CHAT_INTEGRATION.md`.
+
+Suggested manual commits:
+- Phase 7: `feat(chat): add session-only Peek Rating feedback`
+- Phase 8: `feat(app): polish account control with existing auth session`

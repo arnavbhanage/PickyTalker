@@ -4,6 +4,9 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
 export default async function ApplicationLayout({ children }: { children: ReactNode }) {
-  if (!(await auth())?.user) redirect("/signin");
-  return <AppShell>{children}</AppShell>;
+  const session = await auth();
+  if (!session?.user) redirect("/signin");
+  const { name, email, image } = session.user;
+  // Keep authentication server-side; send only the display fields to the shell.
+  return <AppShell user={{ name, email, image }}>{children}</AppShell>;
 }

@@ -1,0 +1,6 @@
+.rating { margin-top: 16px; padding-top: 18px; border-top: 1px solid #edf0f4; }
+.heading { margin: 0; font-size: 12px; font-weight: 500; color: #52627a; }
+.controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.clear { min-height: 44px; font-size: 11px; color: #657389; }
+.note { margin: 6px 0 0; color: #677487; font-size: 10px; line-height: 1.65; }
+@media (max-width: 380px) { .controls { gap: 0; } .clear { padding-inline: 4px; } }

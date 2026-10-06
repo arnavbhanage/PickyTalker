@@ -16,6 +16,8 @@ let MessageComposer: typeof import("../src/components/chat/message-composer").Me
 let ResponseCard: typeof import("../src/components/chat/response-card").ResponseCard;
 let GenerationStatus: typeof import("../src/components/chat/generation-status").GenerationStatus;
 let SmoothTextarea: typeof import("../src/components/ui/smooth-textarea").SmoothTextarea;
+let ResponseRating: typeof import("../src/components/chat/response-rating").ResponseRating;
+let AccountControl: typeof import("../src/components/app/account-control").AccountControl;
 let render: typeof import("@testing-library/react").render;
 let cleanup: typeof import("@testing-library/react").cleanup;
 let fireEvent: typeof import("@testing-library/react").fireEvent;
@@ -43,9 +45,17 @@ before(async () => {
   }
   Object.defineProperties(globalThis, {
     window: { value: dom.window, configurable: true }, document: { value: dom.window.document, configurable: true },
+    self: { value: dom.window, configurable: true },
     navigator: { value: dom.window.navigator, configurable: true }, HTMLElement: { value: dom.window.HTMLElement, configurable: true },
     HTMLCanvasElement: { value: dom.window.HTMLCanvasElement, configurable: true },
     SVGElement: { value: dom.window.SVGElement, configurable: true }, Element: { value: dom.window.Element, configurable: true },
+    HTMLFormElement: { value: dom.window.HTMLFormElement, configurable: true },
+    CustomEvent: { value: dom.window.CustomEvent, configurable: true },
+    HTMLInputElement: { value: dom.window.HTMLInputElement, configurable: true },
+    HTMLButtonElement: { value: dom.window.HTMLButtonElement, configurable: true },
+    Node: { value: dom.window.Node, configurable: true }, NodeFilter: { value: dom.window.NodeFilter, configurable: true },
+    MutationObserver: { value: dom.window.MutationObserver, configurable: true },
+    Event: { value: dom.window.Event, configurable: true }, FormData: { value: dom.window.FormData, configurable: true },
     getComputedStyle: { value: dom.window.getComputedStyle.bind(dom.window), configurable: true },
     requestAnimationFrame: { value: requestFrame, configurable: true }, cancelAnimationFrame: { value: cancelFrame, configurable: true },
     ResizeObserver: { value: Observer, configurable: true },
@@ -72,6 +82,8 @@ before(async () => {
   ({ ResponseCard } = await import("../src/components/chat/response-card"));
   ({ GenerationStatus } = await import("../src/components/chat/generation-status"));
   ({ SmoothTextarea } = await import("../src/components/ui/smooth-textarea"));
+  ({ ResponseRating } = await import("../src/components/chat/response-rating"));
+  ({ AccountControl } = await import("../src/components/app/account-control"));
 });
 
 beforeEach((t) => {
@@ -444,7 +456,7 @@ test("keyboard copy writes only exact reply text and shows temporary feedback", 
   await user.keyboard("{Enter}");
   assert.equal(await navigator.clipboard.readText(), replyText);
   assert.ok(ui.getByRole("button", { name: "Reply copied" }));
-  assert.match(ui.getByRole("status").textContent!, /copied to clipboard/);
+  assert.match(ui.getByRole("status", { name: "Copy feedback" }).textContent!, /copied to clipboard/);
   await waitFor(() => assert.ok(ui.getByRole("button", { name: "Copy reply" })), { timeout: 3000 });
 });
 
@@ -473,7 +485,7 @@ test("blocked clipboard shows an honest error rather than claiming it copied", a
   await user.click(ui.getByRole("button", { name: "Copy reply" }));
   assert.ok(ui.getByRole("button", { name: "Copy reply" }));
   assert.match(ui.getByRole("alert").textContent!, /Clipboard access was blocked/);
-  assert.equal(ui.getByRole("status").textContent, "");
+  assert.equal(ui.getByRole("status", { name: "Copy feedback" }).textContent, "");
 });
 
 function rankedFixture() {
@@ -560,7 +572,7 @@ test("workspace connects reasons and alternatives to the real API payload withou
   assert.ok(ui.getByText("Third ranked reply 😀"));
   assert.equal(fetch.mock.callCount(), 1);
   assert.equal(ui.container.querySelector("[data-dotted-glow]"), null);
-  assert.equal(ui.queryByRole("slider"), null, "no rating before Phase 7");
+  assert.ok(ui.getByRole("radiogroup", { name: "Was this response useful?" }));
 });
 
 function giveInputDimensions(input: HTMLTextAreaElement) {
@@ -569,6 +581,158 @@ function giveInputDimensions(input: HTMLTextAreaElement) {
     offsetWidth: { value: 400, configurable: true },
   });
 }
+
+test("rating is a labelled 1–5 radio group with honest session-only status", async () => {
+  const ui = render(<ResponseRating />);
+  const group = ui.getByRole("radiogroup", { name: "Was this response useful?" });
+  const stars = ui.getAllByRole("radio");
+  assert.equal(stars.length, 5);
+  assert.ok(stars.every((star) => star.getAttribute("aria-checked") === "false"));
+  const note = document.getElementById(group.getAttribute("aria-describedby")!);
+  assert.equal(note?.textContent, "Only kept in this session—not saved or sent.");
+  const user = userEvent.setup();
+  await user.tab();
+  assert.equal(document.activeElement, stars[0]);
+  await user.keyboard(" ");
+  assert.equal(stars[0].getAttribute("aria-checked"), "true");
+  await user.keyboard("{ArrowRight>}");
+  await waitFor(() => assert.equal(stars[1].getAttribute("aria-checked"), "true"));
+  await user.keyboard("{/ArrowRight}");
+  assert.equal(document.activeElement, stars[1]);
+  await user.keyboard("{ArrowLeft>}");
+  await waitFor(() => assert.equal(stars[0].getAttribute("aria-checked"), "true"));
+  await user.keyboard("{/ArrowLeft}");
+  await user.click(stars[4]);
+  assert.equal(stars[4].getAttribute("aria-checked"), "true");
+  assert.equal(ui.getByRole("status").textContent, "Rated 5 of 5 for this session.");
+  await user.click(ui.getByRole("button", { name: "Clear response rating" }));
+  assert.ok(stars.every((star) => star.getAttribute("aria-checked") === "false"));
+});
+
+test("Peek Rating previews without committing and supports pointer/Enter selection", async () => {
+  reduced = false;
+  const ui = render(<ResponseRating />);
+  const stars = ui.getAllByRole("radio");
+  await userEvent.setup().hover(stars[3]);
+  assert.equal(stars[3].getAttribute("data-peeking"), "true");
+  assert.equal(stars[3].getAttribute("data-lit"), "true");
+  assert.equal(stars[3].getAttribute("aria-checked"), "false");
+  fireEvent.pointerLeave(ui.getByRole("radiogroup"));
+  assert.ok(stars.every((star) => star.getAttribute("data-peeking") === "false"));
+  await userEvent.setup().click(stars[2]);
+  assert.equal(stars[2].getAttribute("aria-checked"), "true");
+  await userEvent.setup().keyboard("{Enter}");
+  assert.equal(stars[2].getAttribute("aria-checked"), "true");
+});
+
+test("ratings are independent per response, reset on remount, and never request persistence", async (t) => {
+  const fetch = t.mock.method(globalThis, "fetch", async () => { throw new Error("Rating must not call the backend"); });
+  const ui = render(<><ResponseCard response={rankedFixture()} /><ResponseCard response={rankedFixture()} /></>);
+  const stars = ui.getAllByRole("radio");
+  const user = userEvent.setup();
+  await user.click(stars[3]);
+  assert.equal(stars[3].getAttribute("aria-checked"), "true");
+  assert.ok(stars.slice(5).every((star) => star.getAttribute("aria-checked") === "false"));
+  await user.click(stars[6]);
+  assert.equal(stars[3].getAttribute("aria-checked"), "true");
+  assert.equal(stars[6].getAttribute("aria-checked"), "true");
+  assert.equal(fetch.mock.callCount(), 0);
+  assert.equal(window.localStorage.length, 0);
+  ui.unmount();
+  const fresh = render(<ResponseRating />);
+  assert.ok(fresh.getAllByRole("radio").every((star) => star.getAttribute("aria-checked") === "false"));
+});
+
+test("rating appears only after successful generation, never during loading or failure", async (t) => {
+  let finish!: (response: Response) => void;
+  t.mock.method(globalThis, "fetch", () => new Promise<Response>((resolve) => { finish = resolve; }));
+  const ui = render(<ChatWorkspace />);
+  assert.equal(ui.queryByRole("radiogroup"), null);
+  fireEvent.change(ui.getByRole("textbox"), { target: { value: "Synthetic rating integration" } });
+  await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
+  assert.equal(ui.queryByRole("radiogroup"), null);
+  await act(async () => finish(Response.json({ detail: "Synthetic provider failure" }, { status: 502 })));
+  assert.ok(ui.getByRole("alert"));
+  assert.equal(ui.queryByRole("radiogroup"), null);
+});
+
+test("rating does not alter exact copy, reveal or explanations", async () => {
+  const ui = render(<ResponseCard response={rankedFixture()} />);
+  const reveal = ui.container.querySelector("[data-response-visual]");
+  const user = userEvent.setup();
+  await user.click(ui.getByRole("radio", { name: "4 of 5, Useful" }));
+  await user.click(ui.getByRole("button", { name: "Why this response" }));
+  assert.ok(ui.getByText("Backend reason about punctuation."));
+  assert.equal(ui.container.querySelector("[data-response-visual]"), reveal);
+  await user.click(ui.getByRole("button", { name: "Copy reply" }));
+  assert.equal(await navigator.clipboard.readText(), replyText);
+  assert.equal(ui.getByRole("radio", { name: "4 of 5, Useful" }).getAttribute("aria-checked"), "true");
+});
+
+test("account control uses session display fields and supports keyboard open, close and restored focus", async () => {
+  const ui = render(<AccountControl user={{ name: "Synthetic User", email: "synthetic@example.test" }} signOutAction={async () => {}} />);
+  const trigger = ui.getByRole("button", { name: "Open account menu" });
+  assert.equal(ui.queryByRole("dialog"), null);
+  const user = userEvent.setup();
+  await user.tab();
+  assert.equal(document.activeElement, trigger);
+  await user.keyboard("{Enter}");
+  const dialog = ui.getByRole("dialog", { name: "Your account" });
+  assert.equal(trigger.getAttribute("aria-expanded"), "true");
+  assert.equal(trigger.getAttribute("aria-controls"), dialog.id);
+  assert.ok(dialog.textContent?.includes("Synthetic User"));
+  assert.ok(dialog.textContent?.includes("synthetic@example.test"));
+  assert.ok(dialog.textContent?.includes("Conversation and ratings are only kept in this session."));
+  assert.equal(document.activeElement, ui.getByRole("button", { name: "Close account menu" }));
+  await user.keyboard("{Escape}");
+  await waitFor(() => assert.equal(ui.queryByRole("dialog"), null));
+  assert.equal(document.activeElement, trigger);
+});
+
+test("account control handles missing identity, long text and sign-out via the supplied existing action", async () => {
+  let calls = 0;
+  let finish!: () => void;
+  const signOutAction = () => { calls++; return new Promise<void>((resolve) => { finish = resolve; }); };
+  const longEmail = "synthetic-long-address-".repeat(8) + "@example.test";
+  const ui = render(<AccountControl user={{ name: "", email: longEmail }} signOutAction={signOutAction} />);
+  const user = userEvent.setup();
+  await user.click(ui.getByRole("button", { name: "Open account menu" }));
+  assert.ok(ui.getByRole("dialog").textContent?.includes(longEmail));
+  await user.click(ui.getByRole("button", { name: "Sign out" }));
+  await waitFor(() => assert.equal(calls, 1));
+  assert.ok((ui.getByRole("button", { name: "Signing out…" }) as HTMLButtonElement).disabled);
+  await user.click(ui.getByRole("button", { name: "Signing out…" }));
+  assert.equal(calls, 1);
+  await act(async () => finish());
+  ui.unmount();
+  const fallback = render(<AccountControl user={{}} signOutAction={async () => {}} />);
+  assert.ok(fallback.getByText("Account"));
+  assert.ok(fallback.getByText("A"));
+});
+
+test("signed-out account control has only the existing sign-in link", () => {
+  const ui = render(<AccountControl user={null} signOutAction={async () => { throw new Error("Must not sign out"); }} />);
+  assert.equal(ui.getByRole("link", { name: "Sign in" }).getAttribute("href"), "/signin");
+  assert.equal(ui.queryByRole("button", { name: "Open account menu" }), null);
+});
+
+test("opening the account popover preserves chat drafts and local response ratings", async () => {
+  const ui = render(<>
+    <AccountControl user={{ name: "Synthetic User" }} signOutAction={async () => {}} />
+    <ResponseCard response={rankedFixture()} />
+    <ChatWorkspace />
+  </>);
+  const input = ui.getByRole("textbox") as HTMLTextAreaElement;
+  fireEvent.change(input, { target: { value: "Keep this synthetic draft\nintact." } });
+  const rating = ui.getByRole("radio", { name: "5 of 5, Very useful" });
+  const user = userEvent.setup();
+  await user.click(rating);
+  await user.click(ui.getByRole("button", { name: "Open account menu" }));
+  await user.click(ui.getByRole("button", { name: "Close account menu" }));
+  assert.equal(input.value, "Keep this synthetic draft\nintact.");
+  assert.equal(rating.getAttribute("aria-checked"), "true");
+  assert.equal(ui.queryByRole("complementary"), null);
+});
 
 test("smooth caret appears on desktop and restores native selection, IME and blur behavior", () => {
   reduced = false;

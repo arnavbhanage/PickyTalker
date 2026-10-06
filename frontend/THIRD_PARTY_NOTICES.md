@@ -6,7 +6,18 @@
 pattern and opacity animation from [React Bits Lattice Loader](https://github.com/DavidHDev/react-bits/tree/main/src/ts-default/Micro/LatticeLoader).
 Changes: waiting-only subset, scoped CSS, no timer or status marks, completely
 static reduced-motion fallback. The React Bits license reproduced below applies
-to both Lattice Loader and Code Slots.
+to Lattice Loader, Peek Rating and Code Slots.
+
+## React Bits Peek Rating
+
+`src/components/ui/peek-rating.tsx` and its CSS module adapt the star preview,
+lift and label-tip treatment from [React Bits Peek Rating](https://reactbits.dev/micro/peek-rating)
+([source](https://github.com/DavidHDev/react-bits/tree/main/src/ts-default/Micro/PeekRating)).
+Changes: five usefulness levels only, existing shadcn/Lucide components,
+Radix radio keyboard/focus semantics, declarative hover/focus preview, 44px tap
+targets and CSS-only reduced-motion-safe lift. No pointer capture, Hugeicons,
+imperative animation or new dependency. Feedback is memory-only per reply;
+it is not submitted or persisted. The React Bits license below applies.
 
 `src/components/ui/text-generate-effect.tsx` adapts the word reveal from
 [Aceternity Text Generate Effect](https://ui.aceternity.com/components/text-generate-effect)

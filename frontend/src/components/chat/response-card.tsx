@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import type { RespondResponse } from "@/lib/types";
 import { ResponseDetails } from "./response-details";
+import { ResponseRating } from "./response-rating";
 import styles from "./chat-workspace.module.css";
 
 export function ResponseCard({ response }: { response: RespondResponse }) {
@@ -45,9 +46,10 @@ export function ResponseCard({ response }: { response: RespondResponse }) {
         </Button>
       </div>
       <TextGenerateEffect text={text} />
-      <span className="sr-only" role="status">{copied ? "Reply copied to clipboard." : ""}</span>
+      <span className="sr-only" role="status" aria-label="Copy feedback">{copied ? "Reply copied to clipboard." : ""}</span>
       {copyError ? <p className={styles.copyError} role="alert">Clipboard access was blocked. Select the reply text to copy it manually.</p> : null}
       <ResponseDetails response={response} />
+      <ResponseRating />
     </article>
   );
 }
