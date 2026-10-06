@@ -34,3 +34,28 @@ frontend/next.config.ts
 .pytest_tmp_product_shell_3
 .pytest_tmp_product_shell_2
 .pytest_tmp_product_shell
+frontend/.agents
+frontend/.claude
+frontend/.cursor
+frontend/.devin
+
+# Local environment secrets (keep the sanitized setup template)
+.env.*
+!.env.example
+
+# Dependencies and local Vercel project metadata
+node_modules/
+.vercel/
+
+# Additional Python caches and test artifacts
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_tmp_*/
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini

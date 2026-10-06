@@ -31,14 +31,15 @@ export default function PrivacyPage() {
         <p>
           The FastAPI backend processes submitted text in memory to create a style profile, rank
           candidates, or prepare a generation request. It limits the working history to the most
-          recent 100 messages. PickyTalker does not currently include a database or intentionally
-          persist conversations, writing histories, incoming messages, or generated replies.
+          recent 100 messages. PickyTalker does not intentionally persist conversations, writing
+          histories, incoming messages, or generated replies.
         </p>
         <p>
-          Because persistence is not implemented, the current product has no saved-history or
-          account-data deletion control. Future versions are intended to provide clear controls
-          to delete conversations, clear history, and delete account data if those types of
-          storage are introduced.
+          Account authentication is stored separately in a PostgreSQL database. That storage is
+          limited to account details, linked Google provider records, and one-way password hashes
+          for email accounts. Login state is carried in an encrypted session cookie. Conversation
+          and style-profile persistence are not implemented. Account self-service deletion is also
+          not available yet; contact the project owner with a deletion request.
         </p>
       </section>
 
@@ -71,9 +72,12 @@ export default function PrivacyPage() {
       <section>
         <h2>5. Accounts, cookies, and analytics</h2>
         <p>
-          User accounts and authentication are not currently active. PickyTalker does not
-          currently add analytics, advertising trackers, or non-essential cookies. For that
-          reason, the current site does not display a cookie-consent banner.
+          PickyTalker uses Auth.js with Google OAuth or an email-and-password account. Google
+          provides basic profile information such as your name, email address, and profile image.
+          For email accounts, PickyTalker stores a one-way password hash rather than the password
+          itself. Auth.js uses an encrypted, essential session cookie to keep you signed in.
+          PickyTalker does not add analytics, advertising trackers, or non-essential cookies, so it
+          does not display a cookie-consent banner for the current feature set.
         </p>
       </section>
 
@@ -90,10 +94,10 @@ export default function PrivacyPage() {
       <section>
         <h2>7. Future changes</h2>
         <p>
-          Privacy practices may change if later versions introduce authentication, database
-          persistence, analytics, or additional AI providers. Before those features are launched,
-          this policy and relevant user controls should be updated to explain what is collected,
-          why it is used, how long it is kept, and how it can be deleted or changed.
+          Privacy practices may change if later versions introduce conversation persistence,
+          analytics, additional sign-in methods, or additional AI providers. Before those features
+          are launched, this policy and relevant user controls should be updated to explain what is
+          collected, why it is used, how long it is kept, and how it can be deleted or changed.
         </p>
       </section>
 

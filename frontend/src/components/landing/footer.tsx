@@ -19,6 +19,7 @@ export function Footer() {
       <div className="footer-main section-wrap">
         <div className="footer-brand">
           <Link className="wordmark" href="/" aria-label="PickyTalker home">
+            <span className="wordmark-mark" aria-hidden="true">P</span>
             <span>PickyTalker</span>
           </Link>
           <p>AI responses that sound more like you.</p>
@@ -30,8 +31,8 @@ export function Footer() {
           </div>
           <div>
             <span className="footer-heading">Information</span>
-            <Link href={SITE_LINKS.privacy}>Privacy</Link>
-            <Link href={SITE_LINKS.terms}>Terms</Link>
+            <Link href={SITE_LINKS.privacy} scroll>Privacy</Link>
+            <Link href={SITE_LINKS.terms} scroll>Terms</Link>
           </div>
           <div>
             <span className="footer-heading">Connect</span>

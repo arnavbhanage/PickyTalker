@@ -1,27 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { PublicPageShell } from "@/components/shared/public-page-shell";
-import { SITE_LINKS } from "@/lib/site-links";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { AccountForm } from "@/components/auth/account-form";
+import { AuthPageShell } from "@/components/auth/auth-page-shell";
 
 export const metadata: Metadata = { title: "Sign in" };
-
-export default function SignInPage() {
-  return (
-    <PublicPageShell
-      eyebrow="Account access"
-      title="Sign in is coming later"
-      introduction="PickyTalker does not have active user accounts yet. Authentication will be introduced only when account-backed features are ready."
-    >
-      <section className="signin-panel">
-        <h2>No account required today</h2>
-        <p>
-          The current product preview does not store conversations or connect activity to an
-          identity. Google and Apple sign-in are intentionally not enabled in this milestone.
-        </p>
-        <Link className="button button-dark" href={SITE_LINKS.app}>
-          View the workspace preview
-        </Link>
-      </section>
-    </PublicPageShell>
-  );
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string; reset?: string }> }) {
+  if ((await auth())?.user) redirect("/app");
+  const params = await searchParams;
+  const notice = params.reset === "success" ? "Password updated. Sign in with your new password."
+    : params.error === "OAuthAccountNotLinked" ? "This email already has an account. Sign in using your original method. Google accounts are not automatically merged."
+    : params.error ? "We couldn’t complete Google sign-in. Please try again." : undefined;
+  return <AuthPageShell title="Good to see you again." description="Sign in to your PickyTalker account."><AccountForm kind="signin" notice={notice} /></AuthPageShell>;
 }

@@ -428,7 +428,7 @@ product structure for the upcoming interactive response workflow.
 | --- | --- |
 | `/` | Public landing page and product overview |
 | `/app` | Prepared application shell for writing history, profiling, generation, ranking, and explanations |
-| `/signin` | Account-access placeholder; authentication is not active |
+| `/signin` | Google or email/password sign-in through Auth.js |
 | `/terms` | Plain-English Terms of Service for the current student/demo project |
 | `/privacy` | Privacy policy describing current stateless processing, logging, and external AI use |
 
@@ -468,11 +468,52 @@ client configuration and can be changed in `frontend/.env.local`. Open
 `http://127.0.0.1:3000` for the landing page or
 `http://127.0.0.1:3000/app` for the application shell.
 
+### Authentication setup
+
+The frontend uses Auth.js with Google OAuth and email/password credentials. The
+Auth.js Prisma adapter persists users, linked Google accounts, and password
+hashes in a Supabase-hosted PostgreSQL database. Login state uses encrypted JWT
+session cookies. Supabase Auth is not used.
+
+Copy `frontend/.env.example` to `frontend/.env.local` and provide these values:
+
+```env
+DATABASE_URL=
+DIRECT_URL=
+AUTH_SECRET=
+AUTH_GOOGLE_ID=
+AUTH_GOOGLE_SECRET=
+NEXT_PUBLIC_PICKYTALKER_API_URL=
+```
+
+Only `NEXT_PUBLIC_PICKYTALKER_API_URL` is exposed to browser code. Keep the
+database URL, Auth.js secret, and Google OAuth secret server-only.
+
+Configure this authorized redirect URI in the Google Cloud OAuth client:
+
+```text
+http://localhost:3000/api/auth/callback/google
+```
+
+Generate and validate the Prisma client from `frontend/`:
+
+```powershell
+npx prisma validate
+npx prisma generate
+npx prisma migrate dev --name init_auth
+```
+
+Use Supabase's transaction-pooler connection for `DATABASE_URL` (application
+traffic) and its direct or session-pooler connection for `DIRECT_URL` (Prisma
+migrations). Run the migration only after both URLs point to the intended
+development database. Prisma Studio is optional and can be opened with
+`npx prisma studio`.
+
 ### Current product limitations
 
 - The chatbot interaction and live `/profile` and `/respond` workflow are not implemented in this milestone.
-- Authentication and user accounts are not implemented.
-- Conversations, accounts, and style profiles are not persisted in a database.
+- Google and email/password authentication are implemented, but require valid database credentials; Google also requires its OAuth credentials.
+- Conversations and style profiles are not persisted in a database.
 - External response generation may be slow or time out.
 - Production deployment is not configured.
 

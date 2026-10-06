@@ -1,4 +1,11 @@
 import type { ReactNode } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 type SectionCardProps = {
@@ -17,13 +24,19 @@ export function SectionCard({
   className,
 }: SectionCardProps) {
   return (
-    <section className={cn("app-section-card", className)}>
-      <header className="app-section-heading">
+    <Card className={cn("app-section-card", className)}>
+      <CardHeader className="app-section-heading">
         {eyebrow ? <span>{eyebrow}</span> : null}
-        <h2>{title}</h2>
-        {description ? <p>{description}</p> : null}
-      </header>
-      {children ? <div className="app-section-content">{children}</div> : null}
-    </section>
+        <CardTitle>
+          <h2>{title}</h2>
+        </CardTitle>
+        {description ? (
+          <CardDescription>
+            <p>{description}</p>
+          </CardDescription>
+        ) : null}
+      </CardHeader>
+      {children ? <CardContent className="app-section-content">{children}</CardContent> : null}
+    </Card>
   );
 }
