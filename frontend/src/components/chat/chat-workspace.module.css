@@ -1,7 +1,7 @@
 .workspace { width: min(1080px, 100%); margin-inline: auto; min-width: 0; }
 .frame { position: relative; isolation: isolate; display: flex; flex-direction: column; min-height: 540px; height: min(780px, calc(100svh - 152px)); overflow: hidden; border: 1px solid #e6e8ee; border-radius: 28px; background: #fff; box-shadow: 0 4px 28px rgb(25 29 38 / 3%); }
 .empty { height: auto; min-height: max(540px, min(780px, calc(100svh - 152px))); justify-content: center; gap: 40px; padding: 68px 32px 88px; }
-.dots { z-index: -1; mask-image: radial-gradient(ellipse at center, #000 12%, transparent 78%); }
+.dots { z-index: -1; mask-image: radial-gradient(ellipse at center, #000 35%, rgb(0 0 0 / 65%) 65%, transparent 100%); }
 .intro { text-align: center; flex-shrink: 0; }
 .emblem { display: inline-grid; width: 48px; height: 48px; place-items: center; margin-bottom: 20px; border: 1px solid #e5e9f1; border-radius: 16px; background: #f8faff; color: #667b9f; box-shadow: 0 3px 12px rgb(72 91 126 / 4%); }
 .eyebrow { margin: 0 0 14px; color: #747e8e; font-size: 10px; font-weight: 600; letter-spacing: 0.17em; }

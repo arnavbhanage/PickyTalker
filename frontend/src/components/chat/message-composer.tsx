@@ -3,7 +3,7 @@
 import { useEffect, useId, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { SmoothTextarea } from "@/components/ui/smooth-textarea";
 import styles from "./message-composer.module.css";
 
 export const MAX_MESSAGE_CHARACTERS = 2000;
@@ -17,8 +17,7 @@ type MessageComposerProps = {
 
 export type MessageComposerHandle = { retry: (message: string) => void };
 
-// Skiper106-inspired rounded input treatment, retaining a native multiline
-// caret: its experimental single-line animated caret is not suitable here.
+// Native multiline input semantics with a Skiper106-style gliding caret.
 export function MessageComposer({ onSubmit, busy = false, ref, submissionErrorHandled = false }: MessageComposerProps) {
   const id = useId();
   const inputId = `incoming-${id}`;
@@ -113,7 +112,7 @@ export function MessageComposer({ onSubmit, busy = false, ref, submissionErrorHa
         requestSubmission();
       }}>
         <label className="sr-only" htmlFor={inputId}>Message you want to reply to</label>
-        <Textarea
+        <SmoothTextarea
           ref={inputRef}
           id={inputId}
           name="incoming"

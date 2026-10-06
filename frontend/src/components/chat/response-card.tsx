@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Feather } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
+import type { RespondResponse } from "@/lib/types";
+import { ResponseDetails } from "./response-details";
 import styles from "./chat-workspace.module.css";
 
-export function ResponseCard({ text }: { text: string }) {
+export function ResponseCard({ response }: { response: RespondResponse }) {
+  const text = response.best.candidate;
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,6 +47,7 @@ export function ResponseCard({ text }: { text: string }) {
       <TextGenerateEffect text={text} />
       <span className="sr-only" role="status">{copied ? "Reply copied to clipboard." : ""}</span>
       {copyError ? <p className={styles.copyError} role="alert">Clipboard access was blocked. Select the reply text to copy it manually.</p> : null}
+      <ResponseDetails response={response} />
     </article>
   );
 }

@@ -24,10 +24,14 @@ using existing shadcn/Lucide components; no restricted Pro source was copied.
 
 `src/components/chat/message-composer.tsx` uses the rounded input treatment of
 [Skiper UI's Smooth Caret Input (Skiper106)](https://skiper-ui.com/v1/skiper106)
-as a design reference. It is an original multiline implementation using the
-existing shadcn primitives, not a copy of the experimental single-line caret.
-The native caret, selection, IME composition, mobile input and keyboard semantics
-are retained; no DialKit/debug UI or additional animation dependencies are added.
+as a design reference. `src/components/ui/smooth-textarea.tsx` implements the
+gliding caret overlay in an original multiline adaptation using a hidden DOM
+mirror for real wrapping, tabs and Unicode rather than single-line canvas
+measurement. Movement uses a short eased CSS transition, not DialKit or debug
+controls. Native text, selection and keyboard semantics are retained. The native
+caret is restored for selection, IME composition, mobile/coarse pointers, bidi
+text, reduced motion and unsupported geometry; forced-colors CSS also restores
+the native caret. Mirrors and listeners are cleaned up on unmount.
 
 ## Aceternity Dotted Glow Background
 

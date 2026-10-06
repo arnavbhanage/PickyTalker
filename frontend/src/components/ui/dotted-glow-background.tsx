@@ -17,10 +17,10 @@ type DottedGlowBackgroundProps = {
 export function DottedGlowBackground({
   className,
   gap = 24,
-  radius = 1,
-  opacity = 0.36,
-  color = "#a7b0c2",
-  glowColor = "#899dca",
+  radius = 1.35,
+  opacity = 0.72,
+  color = "#7187ad",
+  glowColor = "#6f91d0",
 }: DottedGlowBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -45,10 +45,10 @@ export function DottedGlowBackground({
       context.fillStyle = color;
       for (const dot of dots) {
         const wave = ((now / 1000) * dot.speed + dot.phase) % 2;
-        const brightness = motionPreference.matches ? 0.42 : 0.25 + 0.55 * (wave < 1 ? wave : 2 - wave);
+        const brightness = motionPreference.matches ? 0.62 : 0.45 + 0.55 * (wave < 1 ? wave : 2 - wave);
         context.globalAlpha = brightness * opacity;
         context.shadowColor = motionPreference.matches ? "transparent" : glowColor;
-        context.shadowBlur = !motionPreference.matches && brightness > 0.6 ? 4 : 0;
+        context.shadowBlur = !motionPreference.matches && brightness > 0.7 ? 6 : 0;
         context.beginPath();
         context.arc(dot.x, dot.y, Math.max(0.5, radius), 0, Math.PI * 2);
         context.fill();

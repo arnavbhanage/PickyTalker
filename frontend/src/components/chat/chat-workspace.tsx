@@ -56,7 +56,7 @@ export function ChatWorkspace() {
                           onClick={() => composerRef.current?.retry(turn.incoming)}>Retry generation</Button> : null}
                       </div>
                     ) : null}
-                    {turn.status === "complete" && turn.response ? <ResponseCard text={turn.response.best.candidate} /> : null}
+                    {turn.status === "complete" && turn.response ? <ResponseCard response={turn.response} /> : null}
                   </li>
                 ))}
               </ol>
