@@ -468,6 +468,13 @@ client configuration and can be changed in `frontend/.env.local`. Open
 `http://127.0.0.1:3000` for the landing page or
 `http://127.0.0.1:3000/app` for the application shell.
 
+The frontend also supports Supabase browser and server clients. Add
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to
+`frontend/.env.local`; copy the placeholders from `frontend/.env.example` for
+a new environment. Next.js Proxy refreshes Supabase sessions, but authentication
+screens and protected routes are not implemented yet. Enable Row Level Security
+before exposing any database table through the public Data API.
+
 ### Current product limitations
 
 - The chatbot interaction and live `/profile` and `/respond` workflow are not implemented in this milestone.
