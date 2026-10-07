@@ -8,7 +8,12 @@ data/processed/*.csv
 data/processed/enron_messages.csv
 data/processed/benchmark_v0.csv
 data/processed/benchmark_v1.csv
-models/
+# Keep training/checkpoint outputs private, but ship the small inference artifacts.
+# Anchor this to the repository root so frontend/public/models icons are included.
+/models/*
+!/models/ranker.txt
+!/models/population_stats.json
+!/models/artifact_meta.json
 models/saved_models/*
 models/formality_model/*
 models/response_ranker/*
@@ -20,16 +25,6 @@ data/external/*
 data/cache/
 frontend/CLAUDE.md
 frontend/AGENTS.md
-frontend/public/file.svg
-frontend/public/globe.svg
-
-frontend/public/next.svg
-frontend/public/vercel.svg
-frontend/public/window.svg
-frontend/src/app/favicon.ico
-frontend/src/lib/links.ts
-frontend/postcss.config.mjs
-frontend/next.config.ts
 
 .pytest_tmp_product_shell_3
 .pytest_tmp_product_shell_2
