@@ -1,5 +1,7 @@
 # Unlike Git, a CLI upload must include locally ignored public config/link files.
 /*
+!frontend/
+!frontend/**
 !src/
 !public/
 !prisma/
