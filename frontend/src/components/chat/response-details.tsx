@@ -5,7 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import type { RespondResponse } from "@/lib/types";
 import styles from "./response-details.module.css";
 
-export function ResponseDetails({ response }: { response: RespondResponse }) {
+export function ResponseDetails({ response, sampleCount = 0 }: { response: RespondResponse; sampleCount?: number }) {
   const headingId = useId();
   // The API validator checks ascending backend ranks. Preserve that order;
   // do not rerank by style_score or construct browser-side explanations.
@@ -26,7 +26,9 @@ export function ResponseDetails({ response }: { response: RespondResponse }) {
             {response.best.reasons.map((reason, index) => <li key={index}>{reason}</li>)}
           </ul>
         ) : <p className={styles.note}>The backend didn’t provide an explanation for this reply.</p>}
-        <p className={styles.note}>Backend style signals—not a personal style profile yet.</p>
+        <p className={styles.note}>{sampleCount >= 3
+          ? `Compared with ${sampleCount} writing samples you supplied. Style scores aren’t accuracy percentages.`
+          : "Limited or no writing samples were supplied. Don’t treat this as an accurate imitation of your voice."}</p>
         <h3 className={styles.heading}>Other ways to reply</h3>
         {alternatives.length ? (
           <ol className={styles.alternatives} aria-label="Ranked alternatives" start={2}>

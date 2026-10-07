@@ -18,6 +18,7 @@ let GenerationStatus: typeof import("../src/components/chat/generation-status").
 let SmoothTextarea: typeof import("../src/components/ui/smooth-textarea").SmoothTextarea;
 let ResponseRating: typeof import("../src/components/chat/response-rating").ResponseRating;
 let AccountControl: typeof import("../src/components/app/account-control").AccountControl;
+let SocialControls: typeof import("../src/components/landing/social-controls").SocialControls;
 let render: typeof import("@testing-library/react").render;
 let cleanup: typeof import("@testing-library/react").cleanup;
 let fireEvent: typeof import("@testing-library/react").fireEvent;
@@ -84,6 +85,7 @@ before(async () => {
   ({ SmoothTextarea } = await import("../src/components/ui/smooth-textarea"));
   ({ ResponseRating } = await import("../src/components/chat/response-rating"));
   ({ AccountControl } = await import("../src/components/app/account-control"));
+  ({ SocialControls } = await import("../src/components/landing/social-controls"));
 });
 
 beforeEach((t) => {
@@ -110,6 +112,20 @@ test("empty shell has a decorative non-interactive background and accessible com
   assert.ok(ui.getByRole("button", { name: "Generate reply" }));
   assert.equal(ui.queryByRole("log"), null);
   assert.equal(ui.queryByRole("complementary"), null, "no sidebar");
+  for (const copy of ["Paste a message you want to reply to.", "A little space to find the right words.", "to send", "for a new line"]) {
+    assert.equal(ui.queryByText(copy, { exact: false }), null, `removed copy: ${copy}`);
+  }
+});
+
+test("shared chatbot/landing social controls keep accessible labels and safe external links", () => {
+  const ui = render(<SocialControls />);
+  for (const [name, prefix] of [["PickyTalker on LinkedIn", "https://www.linkedin.com/"], ["PickyTalker on GitHub", "https://github.com/"]]) {
+    const link = ui.getByRole("link", { name });
+    assert.ok(link.getAttribute("href")?.startsWith(prefix));
+    assert.equal(link.getAttribute("target"), "_blank");
+    assert.match(link.getAttribute("rel")!, /noopener/);
+    assert.match(link.getAttribute("rel")!, /noreferrer/);
+  }
 });
 
 test("first real request removes dots, preserves multiline text and restores composer focus", async (t) => {
@@ -145,7 +161,7 @@ test("composer and submit action are reachable by keyboard", async () => {
   assert.equal(document.activeElement, ui.getByRole("textbox"));
   await user.keyboard("A synthetic message");
   await user.tab();
-  assert.equal(document.activeElement, ui.getByRole("button"));
+  assert.equal(document.activeElement, ui.getByRole("button", { name: "Generate reply" }));
   await user.keyboard("{Enter}");
   assert.ok(ui.getByRole("log"));
   assert.equal(ui.container.querySelector("[data-dotted-glow]"), null);
@@ -219,7 +235,7 @@ test("validation preserves blank and over-limit drafts without starting chat", a
   assert.equal(ui.queryByRole("log"), null);
   fireEvent.change(input, { target: { value: "Fixed message" } });
   assert.equal(ui.queryByRole("alert"), null);
-  await userEvent.setup().click(ui.getByRole("button"));
+  await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
   assert.ok(ui.getByRole("log"));
 });
 
@@ -325,6 +341,72 @@ test("multiple messages append in order, sending no received or generated text a
   assert.equal(ui.container.querySelector("[data-dotted-glow]"), null);
   assert.equal(fetchMock.mock.callCount(), 2);
   for (const call of fetchMock.mock.calls) assert.deepEqual(JSON.parse((call.arguments[1] as RequestInit).body as string).history, []);
+});
+
+test("saved own writing samples reach every reply request without learning incoming or generated text", async (t) => {
+  const samples = ["yep gotchu", "no worries :)\nill check", "nah tomorrow works"];
+  const fetch = t.mock.method(globalThis, "fetch", async () => Response.json(respondFixture()));
+  const ui = render(<ChatWorkspace initialWritingProfile={{ samples, revision: "2026-10-07T12:00:00.000Z" }} />);
+  for (const incoming of ["Thanks for helping!", "Could you confirm?"]) {
+    fireEvent.change(ui.getByRole("textbox"), { target: { value: incoming } });
+    await userEvent.setup().click(ui.getByRole("button", { name: "Generate reply" }));
+    await waitFor(() => assert.equal((ui.getByRole("textbox") as HTMLTextAreaElement).value, ""));
+  }
+  assert.equal(fetch.mock.callCount(), 2);
+  for (const call of fetch.mock.calls) assert.deepEqual(JSON.parse((call.arguments[1] as RequestInit).body as string).history, samples);
+  assert.equal(ui.queryAllByText(/Compared with 3 writing samples/).length, 0, "details remain collapsed until requested");
+});
+
+test("voice editor loads, saves explicit samples and connects only confirmed saves to next replies", async (t) => {
+  const samples = ["yep gotchu", "no worries :)\nill check", "nah tomorrow works"];
+  const fetch = t.mock.method(globalThis, "fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+    if (String(url) === "/api/writing-profile") return Response.json(init?.method === "PUT"
+      ? { samples: JSON.parse(init.body as string).samples, revision: "2026-10-07T12:00:00.000Z" }
+      : { samples: [], revision: null });
+    return Response.json(respondFixture());
+  });
+  const ui = render(<ChatWorkspace />);
+  const user = userEvent.setup();
+  const trigger = ui.getByRole("button", { name: "Your voice" });
+  await user.click(trigger);
+  await waitFor(() => assert.ok(ui.getByRole("textbox", { name: "Your message 1" })));
+  assert.ok(ui.getByRole("dialog", { name: "Make replies sound like you" }));
+  for (let index = 0; index < samples.length; index++) fireEvent.change(ui.getByRole("textbox", { name: `Your message ${index + 1}` }), { target: { value: samples[index] } });
+  await user.click(ui.getByRole("button", { name: "Save my writing samples" }));
+  await waitFor(() => assert.equal(ui.queryByRole("dialog"), null));
+  assert.equal(document.activeElement, trigger);
+  assert.ok(ui.getByText(/Using 3 of your writing samples/));
+  const savedCall = fetch.mock.calls.find((call) => (call.arguments[1] as RequestInit)?.method === "PUT")!;
+  assert.deepEqual(JSON.parse((savedCall.arguments[1] as RequestInit).body as string), { samples, revision: null });
+  fireEvent.change(ui.getByRole("textbox"), { target: { value: "Thanks!" } });
+  await user.click(ui.getByRole("button", { name: "Generate reply" }));
+  await waitFor(() => assert.equal((ui.getByRole("textbox") as HTMLTextAreaElement).value, ""));
+  assert.deepEqual(JSON.parse((fetch.mock.calls.at(-1)!.arguments[1] as RequestInit).body as string).history, samples);
+});
+
+test("failed sample saves preserve sample drafts and do not claim persistence or change reply history", async (t) => {
+  const fetch = t.mock.method(globalThis, "fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+    if (String(url) === "/api/writing-profile") return init?.method === "PUT"
+      ? Response.json({ error: "private diagnostic" }, { status: 503 })
+      : Response.json({ samples: [], revision: null });
+    return Response.json(respondFixture());
+  });
+  const ui = render(<ChatWorkspace />);
+  const user = userEvent.setup();
+  await user.click(ui.getByRole("button", { name: "Your voice" }));
+  await waitFor(() => assert.ok(ui.getByRole("textbox", { name: "Your message 1" })));
+  const sample = ui.getByRole("textbox", { name: "Your message 1" }) as HTMLTextAreaElement;
+  fireEvent.change(sample, { target: { value: "Keep this sample\nexactly." } });
+  await user.click(ui.getByRole("button", { name: "Save my writing samples" }));
+  await waitFor(() => assert.match(ui.getByRole("alert").textContent!, /weren’t saved/));
+  assert.equal(sample.value, "Keep this sample\nexactly.");
+  assert.equal(ui.queryByText(/private diagnostic/), null);
+  await user.keyboard("{Escape}");
+  await waitFor(() => assert.equal(ui.queryByRole("dialog"), null));
+  fireEvent.change(ui.getByRole("textbox"), { target: { value: "Thanks!" } });
+  await user.click(ui.getByRole("button", { name: "Generate reply" }));
+  await waitFor(() => assert.equal((ui.getByRole("textbox") as HTMLTextAreaElement).value, ""));
+  assert.deepEqual(JSON.parse((fetch.mock.calls.at(-1)!.arguments[1] as RequestInit).body as string).history, []);
 });
 
 test("real request stays pending with one loader, retained input and no early reply", async (t) => {

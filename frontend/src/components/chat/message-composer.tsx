@@ -135,7 +135,6 @@ export function MessageComposer({ onSubmit, busy = false, ref, submissionErrorHa
           onCompositionEnd={() => { composingRef.current = false; }}
         />
         <div className={styles.toolbar}>
-          <span className={styles.shortcuts}><kbd>Enter</kbd> to send · <kbd>Shift + Enter</kbd> for a new line</span>
           <div className={styles.actions}>
             {characterCount >= 1600 ? <span className={styles.count} data-over-limit={characterCount > MAX_MESSAGE_CHARACTERS} aria-label={`${characterCount} of ${MAX_MESSAGE_CHARACTERS} characters`}>{characterCount.toLocaleString("en-US")} / 2,000</span> : null}
             <Button type="submit" size="icon" className={styles.submit} disabled={disabled} aria-label="Generate reply">

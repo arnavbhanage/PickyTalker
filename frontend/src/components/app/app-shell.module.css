@@ -6,9 +6,23 @@
   padding: 28px 24px 24px;
 }
 
-.tagline {
-  color: var(--muted-foreground);
-  font-size: 12px;
+.shell :global(.app-header-actions) {
+  gap: 16px;
+}
+
+.shell :global(.social-control),
+.shell :global(.magnetic-wrap) {
+  width: 44px;
+  height: 44px;
+}
+
+.shell :global(.social-control) {
+  color: #627086;
+}
+
+.shell :global(.social-control:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 @media (max-width: 640px) {
@@ -21,7 +35,8 @@
     padding: 14px 12px 18px;
   }
 
-  .tagline {
-    display: none;
+  .shell :global(.app-header-actions),
+  .shell :global(.social-controls) {
+    gap: 4px;
   }
 }

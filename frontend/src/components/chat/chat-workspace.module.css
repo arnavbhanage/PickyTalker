@@ -1,14 +1,14 @@
 .workspace { width: min(1080px, 100%); margin-inline: auto; min-width: 0; }
 .frame { position: relative; isolation: isolate; display: flex; flex-direction: column; min-height: 540px; height: min(780px, calc(100svh - 152px)); overflow: hidden; border: 1px solid #e6e8ee; border-radius: 28px; background: #fff; box-shadow: 0 4px 28px rgb(25 29 38 / 3%); }
-.empty { height: auto; min-height: max(540px, min(780px, calc(100svh - 152px))); justify-content: center; gap: 40px; padding: 68px 32px 88px; }
+.empty { height: auto; min-height: max(540px, min(780px, calc(100svh - 152px))); justify-content: center; gap: 40px; padding: 68px 32px; }
 .dots { z-index: -1; mask-image: radial-gradient(ellipse at center, #000 35%, rgb(0 0 0 / 65%) 65%, transparent 100%); }
 .intro { text-align: center; flex-shrink: 0; }
 .emblem { display: inline-grid; width: 48px; height: 48px; place-items: center; margin-bottom: 20px; border: 1px solid #e5e9f1; border-radius: 16px; background: #f8faff; color: #667b9f; box-shadow: 0 3px 12px rgb(72 91 126 / 4%); }
 .eyebrow { margin: 0 0 14px; color: #747e8e; font-size: 10px; font-weight: 600; letter-spacing: 0.17em; }
 .intro h1 { margin: 0; font-size: clamp(32px, 4.3vw, 48px); font-weight: 500; line-height: 1.16; letter-spacing: -0.055em; color: #252a34; }
-.subtitle { margin: 18px 0 0; color: #687181; font-size: 14px; line-height: 1.7; }
-.quietNote { position: absolute; bottom: 26px; left: 20px; right: 20px; display: flex; align-items: center; justify-content: center; gap: 7px; margin: 0; color: #78818e; font-size: 11px; }
 .footer { margin: 17px 0 0; text-align: center; font-size: 10px; letter-spacing: 0.03em; color: #747e8d; }
+.voiceControls { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.voiceControls .footer { margin: 0; line-height: 1.7; }
 .active { padding: 0 28px 20px; }
 .conversationHeader { display: flex; align-items: center; gap: 9px; min-height: 64px; flex-shrink: 0; border-bottom: 1px solid #eef0f4; color: #73809a; }
 .conversationHeader h1 { margin: 0; font-size: 13px; font-weight: 550; color: #3a4455; }
@@ -34,9 +34,8 @@
 .message p { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.7; }
 @media (max-width: 640px) {
   .frame { min-height: 500px; height: calc(100svh - 130px); border-radius: 22px; }
-  .empty { height: auto; min-height: max(500px, calc(100svh - 130px)); gap: 30px; padding: 36px 18px 68px; }
+  .empty { height: auto; min-height: max(500px, calc(100svh - 130px)); gap: 30px; padding: 36px 18px; }
   .intro h1 { font-size: clamp(30px, 7.5vw, 40px); }
-  .subtitle { font-size: 13px; }
   .active { padding: 0 16px 16px; }
   .conversationHeader > span { display: none; }
   .message { max-width: 95%; padding: 14px 16px; }

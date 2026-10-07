@@ -166,14 +166,12 @@ const CollisionMechanism = ({
 
   useEffect(() => {
     if (collision.detected && collision.coordinates) {
-      setTimeout(() => {
+      const resetTimer = setTimeout(() => {
         setCollision({ detected: false, coordinates: null });
         setCycleCollisionDetected(false);
-      }, 2000);
-
-      setTimeout(() => {
         setBeamKey((prevKey) => prevKey + 1);
       }, 2000);
+      return () => clearTimeout(resetTimer);
     }
   }, [collision]);
 
@@ -182,6 +180,7 @@ const CollisionMechanism = ({
       <motion.div
         key={beamKey}
         ref={beamRef}
+        aria-hidden="true"
         animate="animate"
         initial={{
           translateY: beamOptions.initialY || "-200px",
@@ -204,7 +203,7 @@ const CollisionMechanism = ({
           repeatDelay: beamOptions.repeatDelay || 0,
         }}
         className={cn(
-          "absolute left-0 top-20 m-auto h-14 w-px rounded-full bg-gradient-to-t from-slate-400 via-blue-300 to-transparent",
+          "pointer-events-none absolute left-0 top-20 m-auto h-14 w-[2px] rounded-full bg-gradient-to-t from-blue-600 via-indigo-400 to-transparent",
           beamOptions.className
         )}
       />
@@ -234,7 +233,7 @@ const Explosion = ({ ...props }: React.HTMLProps<HTMLDivElement>) => {
   }));
 
   return (
-    <div {...props} className={cn("absolute z-50 h-2 w-2", props.className)}>
+    <div {...props} aria-hidden="true" className={cn("pointer-events-none absolute z-50 h-2 w-2", props.className)}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

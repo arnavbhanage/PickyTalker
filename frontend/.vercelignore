@@ -1,0 +1,18 @@
+# Unlike Git, a CLI upload must include locally ignored public config/link files.
+/*
+!src/
+!public/
+!prisma/
+!package.json
+!package-lock.json
+!tsconfig.json
+!next.config.ts
+!postcss.config.mjs
+!prisma.config.ts
+!components.json
+!vercel.json
+src/generated/
+**/.env*
+**/*.log
+**/*.tsbuildinfo
+**/__pycache__/

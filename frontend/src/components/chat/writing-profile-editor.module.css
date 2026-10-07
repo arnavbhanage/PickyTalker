@@ -1,0 +1,16 @@
+.trigger:global([data-slot="button"]) { color: #526783; min-height: 44px; font-size: 12px; }
+.badge { display: inline-grid; min-width: 20px; height: 20px; padding-inline: 5px; place-items: center; background: #eaf0fa; border-radius: 6px; font-size: 10px; }
+.dialog { background: #fff; }
+.title { padding-right: 22px; margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.03em; }
+.description { margin: 12px 0 0; color: #626d7e; font-size: 13px; line-height: 1.7; }
+.privacy { margin: 16px 0; padding: 12px; background: #f6f8fb; border-radius: 10px; color: #59677c; font-size: 11px; line-height: 1.7; }
+.samples { display: flex; flex-direction: column; gap: 16px; }
+.sample { position: relative; }
+.sample label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 500; }
+.sample textarea { min-height: 80px; padding-right: 44px; font-size: 16px; }
+.remove:global([data-slot="button"]) { position: absolute; top: 28px; right: 2px; height: 44px; width: 40px; color: #697386; }
+.note { margin: 16px 0; color: #626d7e; font-size: 11px; line-height: 1.7; }
+.error { margin: 12px 0; color: #b42332; font-size: 12px; line-height: 1.6; }
+.actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+.actions button { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) { .dialog *, .dialog *::before, .dialog *::after { animation: none !important; transition: none !important; } }

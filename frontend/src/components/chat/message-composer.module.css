@@ -35,9 +35,7 @@
 }
 
 .input::placeholder { color: #747e8d; }
-.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; padding-left: 4px; }
-.shortcuts { color: #626d7e; font-size: 10px; line-height: 1.6; }
-.shortcuts kbd { font: inherit; }
+.toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 10px; }
 .actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .count { color: #626d7e; font-size: 10px; white-space: nowrap; }
 .count[data-over-limit="true"] { color: #b42332; }
@@ -50,7 +48,5 @@
 @media (max-width: 640px) {
   .composer { padding: 14px 12px 10px; border-radius: 18px; }
   .input:global([data-slot="textarea"]) { font-size: 16px; }
-  .shortcuts { display: none; }
-  .toolbar { justify-content: flex-end; }
   .submit:global([data-slot="button"]) { width: 44px; height: 44px; }
 }

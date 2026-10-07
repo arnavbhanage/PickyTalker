@@ -1,4 +1,4 @@
-# Chat integration — through Phase 8
+# Chat integration
 
 The protected `/app` shell keeps the existing Auth.js/session boundary. The chat
 calls the existing `pickyTalkerApi.respond` client, not NVIDIA directly. Configure
@@ -13,11 +13,14 @@ existing FastAPI service on that port from the repository root:
 
 ## Request and state
 
-Each submission posts `{ history: [], incoming }` to `/respond`. The backend's
-default candidate count is used. There is no writing-sample source connected:
-the UI explicitly states replies are not personalized yet. Incoming messages
-and generated replies must never be recycled as the user's writing samples.
-Do not claim a personal style profile or ranker superiority from this flow.
+Each submission posts `{ history: savedOwnWritingSamples, incoming }` to
+`/respond`; the backend's default candidate count is used. Open `Your voice`,
+add messages you actually wrote, and save them before generating a reply.
+Explicit samples are saved privately to the signed-in account through
+`/api/writing-profile`. Incoming messages, generated replies and ratings are
+never automatically added. With no samples the reply is unpersonalized; fewer
+than three samples are labelled limited evidence. There is no fine-tuning or
+guarantee of accurate imitation after a particular message count.
 
 Turns are held in React memory only, not the database or localStorage. Refresh
 clears the conversation. Messages are sent through FastAPI to the AI provider;
@@ -58,8 +61,9 @@ selected rank is excluded, and alternatives preserve complete whitespace and
 Unicode. No scoring, reranking, explanation generation or additional request is
 performed in the browser. Empty reasons and a single candidate have honest
 fallbacks, not invented explanations. Raw scores, contribution vectors and
-percentages are not displayed. The panel reiterates that there is no personal
-style profile yet. Ratings were added separately in Phase 7 below.
+percentages are not displayed. The panel identifies how many writing samples
+were used for that particular response, rather than the current editor state.
+Ratings were added separately in Phase 7 below.
 
 The disclosure is keyboard-accessible with `aria-expanded`, linked panel labels
 and independent state/IDs for each reply. Opening it does not restart the main
@@ -84,8 +88,58 @@ reduced motion and forced colors. There is no DialKit/debug UI or new package.
 The existing FastAPI CORS policy allows local HTTP origins only. Vercel requires
 an HTTPS backend and an explicitly allowed deployed origin or an authenticated
 server-side proxy. If `PICKYTALKER_API_KEY` is enabled, handle it server-side;
-never put it or `NVIDIA_API_KEY` in a `NEXT_PUBLIC_` value. This phase does not
-change backend authorization, CORS, model artifacts or database schema.
+never put it or `NVIDIA_API_KEY` in a `NEXT_PUBLIC_` value. The prepared
+`/api/pickytalker` proxy requires an Auth.js session and passes the backend key
+server-side. Its burst limit is per instance, not a distributed abuse quota.
+Deployment has not been performed. The sample table requires the additive
+Prisma migration on every deployment database.
+
+## Account writing samples — October 7, 2026
+
+`writing_profiles` stores only explicitly saved messages, keyed to the existing
+Auth.js user. The migration was applied without modifying existing users,
+passwords or auth records. Supabase browser roles cannot access this table;
+authenticated server routes derive ownership from the verified session. Writes
+validate bounded sample sizes, reject supplied account IDs and cross-origin
+requests, and use revisions to reject stale-tab overwrites. Failed saves retain
+the draft and do not change active generation samples. To clear saved samples,
+remove all messages in the editor and save the empty list.
+
+Generation combines numeric style measures and quoted wording examples, then
+selects with the interpretable user-style baseline. The research benchmark
+conditions and experimental `/rank` selection remain unchanged. This is
+example-conditioned generation and selection, not training a personal model.
+Saved samples are sent to the external model provider for generation; the editor
+discloses this. Do not add passwords or sensitive information.
+
+Live synthetic checks initially returned malformed-output 502 errors. The
+configured Nemotron 3.5 model defaults to thinking, which shares the output token
+budget. The API now disables thinking for short structured replies on that
+specific documented model only; research-client defaults are unchanged, cache
+keys separate thinking settings, and strict validation remains intact. See
+[NVIDIA's structured output guidance](https://docs.nvidia.com/nim/large-language-models/2.0.10/get-started/advanced/get-started-nemotron-3.5-lightning.html#structured-json-output).
+
+After that change, the real `/respond` endpoint passed both uncached synthetic
+checks with one model call each: casual samples selected `no worries` in 5.06s;
+formal samples selected `Glad it made sense. Let me know if anything else comes
+up.` in 7.26s. This demonstrates a style-sensitive path, not a measured accuracy
+claim; the formal result is still less formal than some supplied examples.
+Repeating at the UI's default five-candidate count also passed both profiles
+with one call each (1.74s casual, 3.07s formal). These are individual smoke-test
+latencies, not a performance guarantee.
+
+Verification: chat/API/layout/sample tests **83/83**, auth/email tests **41/41**,
+backend tests **111/111**, production build, typecheck, lint and diff whitespace
+checks passed. Browser QA used real editor components with three synthetic
+samples and a read-only preview API, not a bypass of authentication or a live
+account-save test. The dialog fit 320px (296px width, no horizontal overflow)
+and keyboard dismissal worked. The temporary preview was stopped; FastAPI is
+left running on port 8765. Final signed-in browser QA remains to do together.
+
+Suggested manual commit: `fix: connect private writing samples to personalized replies`.
+
+The Phase 7/8 notes below are historical; their no-database-change and deferred
+verification statements describe those earlier milestones, not this update.
 
 ## Phase 7 — response rating
 

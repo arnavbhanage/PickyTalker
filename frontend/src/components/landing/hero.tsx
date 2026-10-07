@@ -5,7 +5,7 @@ import { CanvasText } from "@/components/ui/canvas-text";
 export function Hero() {
   return (
     <section className="hero" aria-labelledby="hero-title">
-      <BackgroundBeamsWithCollision className="pointer-events-none absolute inset-0 z-0 h-full w-full bg-background opacity-30 motion-reduce:hidden">
+      <BackgroundBeamsWithCollision className="pointer-events-none absolute inset-0 z-0 h-full w-full bg-background opacity-80 motion-reduce:hidden">
         {null}
       </BackgroundBeamsWithCollision>
       <div className="hero-copy section-wrap relative z-10">

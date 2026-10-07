@@ -27,11 +27,15 @@ def rank_candidates(
     engine: InferenceEngine,
     history: Sequence[str],
     candidates: Sequence[str],
+    strategy: str = "learned",
 ) -> list[dict]:
+    if strategy not in {"learned", "style"}:
+        raise ValueError("Unknown ranking strategy.")
     scored = engine.score_candidates(history, candidates)
+    selection_scores = scored.ranker_scores if strategy == "learned" else scored.style_scores
     order = sorted(
         range(len(candidates)),
-        key=lambda index: (-scored.ranker_scores[index], index),
+        key=lambda index: (-selection_scores[index], index),
     )
     labels = {
         "log_words": "message length",
@@ -59,6 +63,10 @@ def rank_candidates(
             )
             for feature, value in strongest
         ]
+        if strategy == "style" and not history:
+            reasons = ["No writing samples were supplied; this is an unpersonalized reply."]
+        elif strategy == "style":
+            reasons.insert(0, f"Selected using the style baseline from {len(history)} user-authored writing samples.")
         ranked.append({
             "candidate": candidates[index],
             "rank": rank,

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
+  "functions": {
+    "app/backend/main.py": {
+      "maxDuration": 300,
+      "includeFiles": "models/{ranker.txt,population_stats.json,artifact_meta.json}",
+      "excludeFiles": "{frontend/**,tests/**,data/**,notebooks/**,reports/**,scripts/**}"
+    }
+  }
+}

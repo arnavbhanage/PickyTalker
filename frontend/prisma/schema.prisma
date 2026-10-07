@@ -48,8 +48,18 @@ model User {
   sessionVersion Int       @default(0) @map("session_version")
   accounts       Account[]
   sessions       Session[]
+  writingProfile WritingProfile?
 
   @@map("users")
+}
+
+model WritingProfile {
+  userId    String   @id @map("user_id")
+  samples   String[] @default([])
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("writing_profiles")
 }
 
 model EmailVerificationCode {

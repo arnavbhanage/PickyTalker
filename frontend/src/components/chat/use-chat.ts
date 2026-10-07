@@ -10,6 +10,7 @@ export type ChatTurn = {
   status: "pending" | "complete" | "failed";
   response?: RespondResponse;
   error?: string;
+  sampleCount?: number;
 };
 
 export function chatErrorMessage(error: unknown): string {
@@ -27,7 +28,7 @@ export function chatErrorMessage(error: unknown): string {
   }
 }
 
-export function useChat() {
+export function useChat(writingSamples: readonly string[] = []) {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const turnsRef = useRef<ChatTurn[]>([]);
   const active = useRef<{ id: number; controller: AbortController } | null>(null);
@@ -47,12 +48,13 @@ export function useChat() {
     const id = last?.status === "failed" && last.incoming === incoming ? last.id : ++sequence.current;
     const controller = new AbortController();
     active.current = { id, controller };
-    const turn: ChatTurn = { id, incoming, status: "pending" };
+    const history = [...writingSamples];
+    const turn: ChatTurn = { id, incoming, status: "pending", sampleCount: history.length };
     update(id === last?.id ? [...turnsRef.current.slice(0, -1), turn] : [...turnsRef.current, turn]);
     try {
-      // There is no writing-sample source yet. Never turn received messages or
-      // generated replies into the user's personal writing history.
-      const response = await pickyTalkerApi.respond({ history: [], incoming }, { signal: controller.signal });
+      // Snapshot only explicitly supplied user-authored samples. Received
+      // messages, AI replies and ratings are never used as writing evidence.
+      const response = await pickyTalkerApi.respond({ history, incoming }, { signal: controller.signal });
       if (active.current?.controller !== controller || controller.signal.aborted) return;
       update(turnsRef.current.map((item) => item.id === id ? { ...turn, status: "complete", response } : item));
     } catch (error) {
