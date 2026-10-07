@@ -111,8 +111,13 @@ Response fields: `candidates` and `meta` (`latency_ms`, `llm_calls`,
 
 ### `POST /respond`
 
-Generates replies with the instruction condition, ranks them, and returns the top
-choice plus the complete ranked list.
+Generates replies with the product-only personalized condition: measured style
+instructions plus up to 10 recent quoted, user-authored examples (12,000 total
+example characters, when at least three samples exist). Selects with the
+interpretable user-style baseline and returns the top choice plus the complete
+ranked list. `/rank` retains the experimental learned-ranker ordering; its real
+score is still returned by `/respond`, but is not used to select the product reply.
+No-history replies retain generator order and are labelled unpersonalized.
 
 ```powershell
 $body = @{
@@ -148,9 +153,12 @@ The service does not save request text or generated replies to disk or logs. It
 logs only request identifiers, endpoint names, latency, and status. `/profile`
 and `/rank` run locally; they do not call NVIDIA. `/generate` and `/respond` call
 the configured NVIDIA API. `neutral` generation sends the incoming message;
-`fewshot` also sends up to 10 recent history messages; `instruction` and
-`/respond` send the incoming message and a style instruction summarized from the
-most recent 100 history messages. Candidate replies returned by NVIDIA are used
+`fewshot` also sends up to 10 recent history messages; `instruction` sends the
+incoming message and a style instruction summarized from the most recent 100
+history messages. `/respond` additionally sends the quoted examples described
+above. The frontend separately persists explicitly saved writing samples in the
+account database; it never automatically treats incoming messages or generated
+replies as the person's writing. Candidate replies returned by NVIDIA are used
 in memory for ranking and are not cached by this API.
 
 **Do not send personal data to NVIDIA or any external model provider without the

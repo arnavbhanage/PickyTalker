@@ -40,10 +40,32 @@ class _Completions:
 
     def create(self, **kwargs):
         self.calls += 1
+        self.last_request = kwargs
         result = self.responses.pop(0)
         if isinstance(result, Exception):
             raise result
         return result
+
+
+def test_concise_nemotron_requests_disable_thinking_without_changing_research_defaults(tmp_path, monkeypatch):
+    model = "nvidia/nemotron-3.5-lightning-30b-a3b"
+    messages = [{"role": "user", "content": "hello"}]
+    research, research_calls = _client(tmp_path, monkeypatch, [_completion()], model=model)
+    research.chat(messages, temperature=0, max_tokens=20)
+    assert "extra_body" not in research_calls.last_request
+    product, product_calls = _client(tmp_path, monkeypatch, [_completion(text="fresh concise reply")], model=model, thinking_enabled=False)
+    response = product.chat(messages, temperature=0, max_tokens=2500)
+    assert response.cached is False
+    assert product_calls.last_request["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
+    cached = product.chat(messages, temperature=0, max_tokens=2500)
+    assert cached.cached is True
+    assert product_calls.calls == 1
+
+
+def test_provider_specific_thinking_option_is_not_sent_to_unknown_models(tmp_path, monkeypatch):
+    nim, calls = _client(tmp_path, monkeypatch, [_completion()], thinking_enabled=False)
+    nim.chat([{"role": "user", "content": "hello"}], temperature=0, max_tokens=20)
+    assert "extra_body" not in calls.last_request
 
 
 def _client(tmp_path, monkeypatch, responses, **kwargs):

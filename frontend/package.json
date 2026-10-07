@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:auth": "tsx --test tests/auth.test.ts tests/code-slots.test.tsx tests/resend.test.ts tests/gmail.test.ts",
-    "test:chat": "tsx --test tests/chat-shell.test.tsx tests/chat-api.test.ts tests/app-layout.test.ts",
+    "test:chat": "tsx --test tests/chat-shell.test.tsx tests/chat-api.test.ts tests/app-layout.test.ts tests/writing-profile.test.ts tests/writing-profile-store.test.ts",
     "email:check": "tsx scripts/check-email.ts",
     "postinstall": "prisma generate"
   },

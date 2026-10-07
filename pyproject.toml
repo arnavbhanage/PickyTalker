@@ -1,0 +1,19 @@
+[project]
+name = "pickytalker-api"
+version = "1.0.0"
+requires-python = ">=3.12,<3.13"
+# Inference-only deployment: training/notebook packages stay in requirements.txt.
+# Match the environment used for the Phase 9 regression checks.
+dependencies = [
+  "fastapi==0.142.2",
+  "uvicorn==0.54.0",
+  "httpx==0.28.1",
+  "numpy==2.5.3",
+  "pandas==3.0.6",
+  "lightgbm==4.7.0",
+  "openai==3.24.0",
+  "python-dotenv==1.2.4",
+]
+
+[tool.vercel]
+entrypoint = "app.backend.main:app"

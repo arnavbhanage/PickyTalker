@@ -83,6 +83,7 @@ class NimClient:
         timeout_s: float = 120.0,
         cache_enabled: bool = True,
         openai_client=None,
+        thinking_enabled: bool | None = None,
     ):
         repo_root = Path(__file__).resolve().parents[2]
         load_dotenv(repo_root / ".env")
@@ -108,6 +109,11 @@ class NimClient:
         self.backoff_seconds = backoff_seconds
         self.timeout_s = timeout_s
         self.cache_enabled = cache_enabled
+        self._extra_body = (
+            {"chat_template_kwargs": {"enable_thinking": thinking_enabled}}
+            if thinking_enabled is not None and self.model == "nvidia/nemotron-3.5-lightning-30b-a3b"
+            else None
+        )
         self.cache_path = Path(cache_path) if cache_path else repo_root / "data" / "cache" / "nim_responses.jsonl"
         if self.cache_enabled:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -127,6 +133,7 @@ class NimClient:
         temperature: float,
         max_tokens: int,
         response_format: dict[str, object] | None = None,
+        extra_body: dict[str, object] | None = None,
     ) -> str:
         payload = {
             "model": model,
@@ -136,6 +143,8 @@ class NimClient:
         }
         if response_format is not None:
             payload["response_format"] = response_format
+        if extra_body is not None:
+            payload["extra_body"] = extra_body
         serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
@@ -217,6 +226,7 @@ class NimClient:
         temperature: float,
         max_tokens: int,
         response_format: dict[str, object] | None = None,
+        extra_body: dict[str, object] | None = None,
     ) -> LLMResponse | None:
         if not self.cache_path.exists():
             return None
@@ -233,6 +243,7 @@ class NimClient:
                     and request.get("messages") == list(messages)
                     and request.get("temperature") == temperature
                     and request.get("response_format") == response_format
+                    and request.get("extra_body") == extra_body
                     and isinstance(request.get("max_tokens"), int)
                     and request["max_tokens"] < max_tokens
                 ):
@@ -294,12 +305,15 @@ class NimClient:
         }
         if response_format is not None:
             request["response_format"] = response_format
+        if self._extra_body is not None:
+            request["extra_body"] = self._extra_body
         request_key = self._request_key(
             self.model,
             messages,
             temperature,
             max_tokens,
             response_format=response_format,
+            extra_body=self._extra_body,
         )
         if self.cache_enabled:
             cached_response = self._cache_lookup(request_key)
@@ -311,6 +325,7 @@ class NimClient:
                 temperature,
                 max_tokens,
                 response_format=response_format,
+                extra_body=self._extra_body,
             )
             if cached_response is not None:
                 return cached_response
@@ -326,6 +341,7 @@ class NimClient:
                     temperature=temperature,
                     max_tokens=max_tokens,
                     response_format=response_format,
+                    **({"extra_body": self._extra_body} if self._extra_body is not None else {}),
                 )
             except Exception as exc:
                 status_code = getattr(exc, "status_code", None)

@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Privacy" };
 export default function PrivacyPage() {
   return (
     <PublicPageShell
-      eyebrow="Last updated October 6, 2026"
+      eyebrow="Last updated October 7, 2026"
       title="Privacy Policy"
       introduction="This policy describes how the current PickyTalker student and demonstration project handles information. It reflects the system as it exists today and has not been reviewed by a lawyer."
     >
@@ -31,15 +31,18 @@ export default function PrivacyPage() {
         <p>
           The FastAPI backend processes submitted text in memory to create a style profile, rank
           candidates, or prepare a generation request. It limits the working history to the most
-          recent 100 messages. PickyTalker does not intentionally persist conversations, writing
-          histories, incoming messages, or generated replies.
+          recent 100 messages. Conversations, incoming messages, generated replies, and response
+          ratings are not intentionally persisted. Writing samples you explicitly save through
+          the Your voice editor are stored in the project&apos;s Supabase PostgreSQL database,
+          associated with your account, until you remove them or request account deletion.
         </p>
         <p>
           Account authentication is stored separately in a PostgreSQL database. That storage is
-          limited to account details, linked Google provider records, and one-way password hashes
-          for email accounts. Login state is carried in an encrypted session cookie. Conversation
-          and style-profile persistence are not implemented. Account self-service deletion is also
-          not available yet; contact the project owner with a deletion request.
+          used for account details, linked Google provider records, and one-way password hashes
+          for email accounts. Login state is carried in an encrypted session cookie. Saved writing
+          samples are accessible through authenticated server routes for their owning account;
+          they are not exposed through the browser&apos;s Supabase Data API. Account self-service
+          deletion is not available yet; contact the project owner with a deletion request.
         </p>
       </section>
 
@@ -87,7 +90,10 @@ export default function PrivacyPage() {
           Reasonable technical measures are used to limit exposure, including backend-only
           provider credentials and privacy-safe application logging. No system is completely
           secure, so submit only information you are comfortable processing through the service.
-          You can choose not to use AI generation or not to provide writing samples.
+          You can choose not to use AI generation or not to provide writing samples. Open Your
+          voice to review or change saved samples. Remove every sample and save to stop using
+          that writing history for future replies. Messages you receive and AI-generated replies
+          are never automatically added to your writing samples.
         </p>
       </section>
 

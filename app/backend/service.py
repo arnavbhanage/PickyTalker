@@ -120,8 +120,10 @@ def respond(
     incoming: str,
     n: int,
 ) -> dict:
-    candidates, metadata = _generate(client, history, incoming, n, "instruction")
-    ranked = rank(engine, history, candidates)
+    candidates, metadata = _generate(client, history, incoming, n, "personalized")
+    # The existing style baseline beats the experimental learned ranker on the
+    # hardest benchmark. Use it for the product; retain /rank for experiments.
+    ranked = rank_candidates(engine, _bounded_history(history), candidates, strategy="style")
     return {
         "best": ranked[0],
         "candidates": ranked,

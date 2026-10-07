@@ -1,0 +1,16 @@
+# Explicit CLI allowlist; do not upload training data or environment secrets.
+/*
+!app/
+!src/
+!models/
+!pyproject.toml
+!vercel.json
+!.vercelignore
+models/*
+!models/ranker.txt
+!models/population_stats.json
+!models/artifact_meta.json
+**/__pycache__/
+**/*.pyc
+**/.env*
+**/*.log
