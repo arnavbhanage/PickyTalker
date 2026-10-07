@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 from app.backend import deps, service
+from app.backend.cors import allowed_origins
 from app.backend.schemas import (
     GenerateRequest,
     GenerateResponse,
@@ -32,6 +33,10 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def create_app(model_dir: str | Path | None = None) -> FastAPI:
+    # Middleware is configured before lifespan startup. Load local config now,
+    # without overriding the environment supplied by the deployment platform.
+    load_dotenv(ROOT / ".env")
+    cors_origins = allowed_origins(os.getenv("PICKYTALKER_CORS_ORIGINS"))
     artifact_dir = Path(
         model_dir
         or os.getenv("PICKYTALKER_MODEL_DIR")
@@ -40,7 +45,6 @@ def create_app(model_dir: str | Path | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        load_dotenv(ROOT / ".env")
         try:
             app.state.inference_engine = InferenceEngine.load(artifact_dir)
             app.state.artifact_error = None
@@ -52,7 +56,7 @@ def create_app(model_dir: str | Path | None = None) -> FastAPI:
     app = FastAPI(title="PickyTalker API", version="1.0.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
+        allow_origins=cors_origins,
         allow_credentials=False,
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type", "X-API-Key", "X-Request-ID"],

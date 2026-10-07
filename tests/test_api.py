@@ -41,6 +41,7 @@ def _engine():
 
 @pytest.fixture
 def api(monkeypatch, tmp_path):
+    monkeypatch.setenv("PICKYTALKER_CORS_ORIGINS", "")
     monkeypatch.setenv("PICKYTALKER_API_KEY", "")
     monkeypatch.setenv("NVIDIA_API_KEY", "")
     monkeypatch.setenv("NIM_MODEL", "")
@@ -276,12 +277,12 @@ def test_logs_never_include_submitted_text_or_candidate_replies(api, caplog):
         assert private_text not in logs
 
 
-def test_cors_allows_only_localhost_origins(api):
+def test_cors_defaults_allow_only_explicit_local_origins(api):
     client, _ = api
     allowed = client.options(
         "/health",
         headers={
-            "Origin": "http://localhost:4173",
+            "Origin": "http://localhost:3000",
             "Access-Control-Request-Method": "GET",
         },
     )
@@ -292,5 +293,5 @@ def test_cors_allows_only_localhost_origins(api):
             "Access-Control-Request-Method": "GET",
         },
     )
-    assert allowed.headers["access-control-allow-origin"] == "http://localhost:4173"
+    assert allowed.headers["access-control-allow-origin"] == "http://localhost:3000"
     assert "access-control-allow-origin" not in denied.headers
