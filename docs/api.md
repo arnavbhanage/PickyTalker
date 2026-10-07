@@ -35,6 +35,30 @@ $headers = @{ "X-API-Key" = "<your local API key>" }
 
 If API-key protection is not enabled, omit `-Headers $headers`.
 
+## CORS for deployment
+
+By default, only `http://localhost:3000` and `http://127.0.0.1:3000` are allowed.
+Add exact HTTPS **frontend** origins with `PICKYTALKER_CORS_ORIGINS` in the
+backend project's environment, then redeploy/restart the backend:
+
+```dotenv
+PICKYTALKER_CORS_ORIGINS=https://your-actual-frontend.vercel.app
+```
+
+Replace the example with your real domain. Multiple origins are comma-separated;
+custom domains and preview deployment URLs must each be explicitly listed.
+Additional local development ports can also be explicitly configured.
+Wildcards, non-local HTTP URLs, credentials and URL paths are rejected at startup.
+Methods remain GET/POST, allowed headers remain Content-Type/X-API-Key/X-Request-ID,
+and cross-origin cookies remain disabled; Auth.js stays on the frontend.
+This follows [FastAPI's explicit-origin guidance](https://fastapi.tiangolo.com/tutorial/cors/).
+
+CORS is not authentication: non-browser clients can still call an API. Keep
+`PICKYTALKER_API_KEY` server-side and use the authenticated Next.js proxy for
+production. With that same-origin browser-to-Next.js flow, the server-to-server
+backend request does not depend on browser CORS; never expose the key through
+a `NEXT_PUBLIC_` variable.
+
 ## Endpoints
 
 ### `GET /health`

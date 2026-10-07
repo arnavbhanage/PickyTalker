@@ -85,7 +85,9 @@ reduced motion and forced colors. There is no DialKit/debug UI or new package.
 
 ## Deployment limits
 
-The existing FastAPI CORS policy allows local HTTP origins only. Vercel requires
+FastAPI CORS defaults to localhost/127.0.0.1 on port 3000. Add exact HTTPS
+frontend domains to the backend's `PICKYTALKER_CORS_ORIGINS` environment variable
+and redeploy; wildcard origins are rejected. Vercel requires
 an HTTPS backend and an explicitly allowed deployed origin or an authenticated
 server-side proxy. If `PICKYTALKER_API_KEY` is enabled, handle it server-side;
 never put it or `NVIDIA_API_KEY` in a `NEXT_PUBLIC_` value. The prepared
